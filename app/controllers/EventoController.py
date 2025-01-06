@@ -1206,8 +1206,9 @@ class EventoController:
                     carreta_programacao = programacao.get("carreta")
                     cavalo_programacao = programacao.get("cavalo")
                     pessoa_programacao = programacao.get("pessoa")
+                    cpf_programacao = programacao.get("cpf")
 
-                    status_pessoa = "ok" if pessoa_programacao == pessoa else "nok"
+                    status_pessoa = "ok" if cpf_programacao == cpf_primeiro_da_fila else "nok"
 
                     status_frontal = "ok" if cavalo_programacao == placa_frontal else "nok"
                     status_traseira = "ok" if carreta_programacao == placa_traseira else "nok"
@@ -1255,10 +1256,12 @@ class EventoController:
                         "pessoa": pessoa,
                         "cpf_primeiro_da_fila": cpf_primeiro_da_fila, 
                         "pessoa_programacao": pessoa_programacao,
+                        "cpf_programacao": cpf_programacao,
                         "carreta_programacao": carreta_programacao,
                         "cavalo_programacao": cavalo_programacao,
                         "status_frontal": status_frontal,
                         "status_traseira": status_traseira,
+                        "status_pessoa": status_pessoa,
                         "status_geral": status_geral
                     })
 

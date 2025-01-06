@@ -337,6 +337,7 @@ class ProgramacaoController:
                     'status': 'success',
                     'programacao': {
                         'pessoa': programacao.pessoa,
+                        'cpf': programacao.cpf,
                         'cavalo': programacao.cavalo,
                         'carreta': programacao.carreta,
                         'datahora_inicio': programacao.datahora_inicio.strftime('%Y-%m-%dT%H:%M'),

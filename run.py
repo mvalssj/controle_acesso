@@ -68,7 +68,6 @@ def run_movimento_service():
         logging.exception(f"Erro ao iniciar MovimentoService: {e}")
         return None
 
-
 if __name__ == '__main__':
     biometria_in_pedestre = None
     biometria_out_pedestre = None

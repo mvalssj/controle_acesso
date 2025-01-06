@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap4.min.css">
+
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <!-- Seção esquerda -->
+        <div class="left-side">
+            <div class="welcome-text">
+                <h1>iPass</h1>
+                <p>Faça login para acessar sua conta.</p>
+            </div>
+        </div>
+
+        <!-- Seção direita -->
+        <div class="right-side">
+            <div class="apple-form">
+                <h2>Login</h2>
+                {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error }}
+                    </div>
+                {% endif %}
+                <form method="POST" action="/autenticar">
+                    <input type="text" class="apple-input" name="username" placeholder="Usuário" required>
+                    <input type="password" class="apple-input" name="password" placeholder="Senha" required>
+                    <button type="submit" class="apple-button-login">Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

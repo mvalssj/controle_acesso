@@ -1,0 +1,24 @@
+
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container text-center footer-content">
+        <span class="text-muted">Intermaritima - Todos os direitos reservados - <span id="ano_atual"></span><span> - v0.3.0</span></span>
+    </div>
+</footer>
+<!-- <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script> -->
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js"></script>
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+
+<script>
+    // Pega o ano atual
+    const anoAtual = new Date().getFullYear();
+    // Define o ano atual no elemento HTML
+    document.getElementById('ano_atual').textContent = anoAtual;
+</script>
+</body>
+</html>

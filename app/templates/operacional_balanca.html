@@ -1,0 +1,820 @@
+{% extends 'header.html' %}
+
+{% block title %}Operacional{% endblock %}
+{% block content %}
+<div class="geral-body">
+
+    <div class="operacional-container">
+
+        <!-- Adicionar o div para o alert de sucesso -->
+        <div id="alert-success" class="alert alert-success alert-dismissible fade show" role="alert"
+            style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%);">
+            <span id="alert-success-json">Buscando Motoristas ...</span>
+
+        </div>
+
+
+        <div class="apple-form" id="foto" style="position: absolute; top: 80px; left: 20px; font-size: 16px;">
+            <img id="foto-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+                style="width: 100%; border-radius: 10px; display: block; margin: 0 auto;">
+            <!-- Adiciona o id "foto-img" -->
+        </div>
+
+        <!-- Adicionar o div para a data/hora no canto direito -->
+        <div class="apple-form" id="datetime" style="position: absolute; top: 80px; right: 20px; font-size: 30px;">
+        </div>
+
+        <div class="apple-form" id="placa_detectada"
+            style="position: absolute; top: 200px; right: 20px; font-size: 16px;">
+
+            <img id="placa_frontal-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+                style="width: 100%; border-radius: 10px; display: block; margin: 0 auto;">
+            <div class="m-3">
+                <!-- <label for="placa" class="mr-2">Placa detectada: </label> -->
+            </div>
+            <div class="m-3 d-flex align-items-center" id="placa_ocr">
+                <input type="text" class="apple-input flex-grow-1" id="placa" value="" readonly>
+                <!-- Botão para nova foto -->
+                <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa" alt="Aprovar Manualmente"
+                    onclick="aprovarPlacaManualmente()">
+                    <i class="fas fa-edit"></i> <!-- Ícone de edição -->
+                </button>
+                <!-- Botão para nova foto com ícone de carregamento -->
+                <button type="button" id="new_foto_placa_frontal" class="btn btn-primary ml-2"
+                    onclick="novaFotoPlacaFrontal()" alt="Tirar nova foto">
+                    <i class="fas fa-camera" id="camera-icon"></i>
+                    <span id="loading-icon" style="display:none;" class="spinner-border spinner-border-sm" role="status"
+                        aria-hidden="true"></span> </button>
+            </div>
+
+        </div>
+
+        <div class="apple-form text-center" id="placa_detectada_botao"
+            style="position: absolute; top: 515px; right: 20px; font-size: 16px;">
+            <!-- Botões agrupados para melhor semântica e centralizados com text-center -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal"
+                    data-target="#filaMotoristasModal">
+                    Motoristas
+                </button>
+                <button type="button" id="ver_balanca" class="btn btn-secondary btn-lg" data-toggle="modal"
+                    data-target="#placaModal">
+                    Balança
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Fila de Motoristas -->
+        <div class="modal fade" id="filaMotoristasModal" tabindex="-1" role="dialog"
+            aria-labelledby="filaMotoristasModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="filaMotoristasModalLabel">Fila de Motoristas</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="fila-motoristas">
+                            <!-- Conteúdo da fila será carregado aqui -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="placaModal" tabindex="-1" role="dialog" aria-labelledby="placaModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+                <!-- Adicionada a classe modal-dialog-centered -->
+                <div class="modal-content" style="min-height: 80vh;">
+
+                    <div id="alert-success-balanca" class="alert alert-success alert-dismissible fade show" role="alert"
+                        style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%); display: none;">
+                        <span id="alert-success-balanca">Carregando ...</span>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div id="alert-danger-balanca" class="alert alert-danger alert-dismissible fade show" role="alert"
+                        style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%); display: none;">
+                        <span id="alert-danger-balanca">Carregando ...</span>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="placaModalLabel">Veículo na Balança</h5>
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="apple-form" style="position: relative; top: 0; left: 0; font-size: 16px;">
+                                    <img id="placa_frontal_balanca-img"
+                                        src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+                                        style="width: 100%; border-radius: 10px; display: block; margin: 0 auto; cursor: zoom-in;"
+                                        onmouseover="zoomIn(this)" onmouseout="zoomOut(this)">
+                                    <div class="m-3">
+                                        <label for="placa-1">Placa: </label>
+                                        <div class="d-flex align-items-center">
+                                        <input type="text" class="apple-input" id="placa_frontal_balanca" value=""
+                                            readonly>
+                                            <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa_frontal"
+                                            alt="Aprovar Manualmente" onclick="aprovarPlacaFrontalManualmenteBalanca()">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 d-flex justify-content-center align-items-center">
+                                <div class="apple-form" style="position: relative; font-size: 16px;">
+                                    <img id="container_superior-img"
+                                        src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+                                        style="width: 70%; border-radius: 10px; display: block; margin: 0 auto;" hidden>
+                                        <div>
+                                            <div class="d-flex flex-column mr-2">
+                                                <label for="direcao-truck">Direção:</label>
+                                                <input type="text" class="apple-input" id="direcao-truck" value="" readonly>
+                                            </div>
+                                            <div class="d-flex flex-column">
+                                                <label for="facial-balanca">Motorista:</label>
+                                                <input type="text" class="apple-input" id="facial-balanca" value="Aguardando..." readonly>
+                                            </div>
+                                        </div>
+                                        
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="apple-form" style="position: relative; top: 0; left: 0; font-size: 16px;">
+                                    <img id="placa_traseira_balanca-img"
+                                        src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+                                        style="width: 100%; border-radius: 10px; display: block; margin: 0 auto; cursor: zoom-in;"
+                                        onmouseover="zoomIn(this)" onmouseout="zoomOut(this)">
+                                    <div class="m-3">
+                                        <label for="placa-3">Placa: </label>
+                                        <div class="d-flex align-items-center">
+                                        <input type="text" class="apple-input" id="placa_traseira_balanca" value=""
+                                            readonly>
+                                            <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa_traseira"
+                                            alt="Aprovar Manualmente" onclick="aprovarPlacaTraseiraManualmenteBalanca()">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa"
+                            alt="Aprovar Manualmente" onclick="aprovarPlacaManualmenteBalanca()">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" id="new_foto_placa_traseira_balanca" class="btn btn-primary"
+                            onclick="novasFotosPlacasBalanca()" alt="Tirar nova foto">
+                            <i class="fas fa-camera" id="camera-icon-traseira"></i>
+                            <span id="loading-icon-traseira" style="display:none;"
+                                class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <form method="POST" class="form-largo" action="/programacoes/cpf">
+
+                <!-- Campo CPF ocupando uma coluna inteira -->
+                <div class="form-group cpf-full">
+                    <label for="cpf">CPF:</label>
+                    <input type="text" class="apple-input" id="cpf" name="cpf" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="pessoa">Pessoa:</label>
+                    <input type="text" class="apple-input" id="pessoa" name="pessoa" value="{{ programacao.pessoa }}"
+                        readonly>
+                </div>
+
+                <!-- Grid para os outros campos -->
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="cavalo">Cavalo/Frontal:</label>
+                        <input type="text" class="apple-input" id="cavalo" name="cavalo"
+                            value="{{ programacao.cavalo }}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="carretas">Carreta(s)/Traseira:</label>
+                        <input type="text" class="apple-input" id="carretas" name="carretas"
+                            value="{{ programacao.carreta }}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="inicio_programacao">Início da Programação:</label>
+                        <input type="datetime-local" class="apple-input" id="inicio_programacao"
+                            name="inicio_programacao" value="{{ programacao.datahora_inicio }}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="final_programacao">Final da Programação:</label>
+                        <input type="datetime-local" class="apple-input" id="final_programacao" name="final_programacao"
+                            value="{{ programacao.datahora_fim }}" readonly>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function zoomIn(element) {
+        element.style.transform = 'scale(3)';
+        element.style.transition = 'transform 0.3s ease';
+        element.style.cursor = 'zoom-out';
+        element.style.position = 'relative';
+        element.style.zIndex = '1000';
+    }
+
+    function zoomOut(element) {
+        element.style.transform = 'scale(1)';
+        element.style.transition = 'transform 0.3s ease';
+        element.style.cursor = 'zoom-in';
+        element.style.zIndex = 'auto';
+    }
+
+    // Função para atualizar o campo CPF com o último CPF inserido
+    function updateCPF() {
+
+        fetch('/fila_balanca')
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    console.error("Dados inválidos recebidos de /fila_balanca");
+                    // document.getElementById('foto-img').src = '';
+                    document.getElementById('placa_frontal-img').src = '';
+                    document.getElementById('cpf').value = '';
+                    document.getElementById('alert-danger-json').innerText = 'Erro ao obter dados.';
+                    return;
+                }else{
+
+                    if (data.direcao == "IN") {
+                        document.getElementById('direcao-truck').value = "ENTRANDO ...";                    
+                        document.getElementById('facial-balanca').value = data.pessoa;
+
+                    } else {
+                        document.getElementById('direcao-truck').value = "SAINDO ...";
+                        document.getElementById('facial-balanca').value = "AGUARDANDO ...";
+                    }
+                    
+                }
+
+                document.getElementById('cpf').value = data.cpf || '';
+
+                buscarProgramacao(data.cpf);
+
+                //fotos das placas
+                document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
+                document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
+                document.getElementById('container_superior-img').src = 'data:image/jpeg;base64,' + data.container_superior;
+                document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
+                //fotos das placas
+
+                if (True) {
+                    console.log('########## Entrou aqui!!!!!: ')
+                    document.getElementById('foto-img').src = 'data:image/jpeg;base64,' + data.imagem_base64;
+                    document.getElementById('foto').style.display = 'block';
+
+                    if (document.getElementById('cavalo').value != '') {
+                        document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
+
+                        // document.querySelector('label[for="placa"]').style.display = 'block';
+                        document.getElementById('placa').style.display = 'block';
+                        document.getElementById('placa_detectada_botao').style.display = 'block';
+                        document.getElementById('new_foto_placa_frontal').style.display = 'block';
+                        document.getElementById('aprovacao_manual_placa').style.display = 'block';
+
+                    } else {
+                        document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.pedestre;
+                        // document.querySelector('label[for="placa"]').style.display = 'none';
+                        document.getElementById('placa').style.display = 'none';
+                        document.getElementById('placa_detectada_botao').style.display = 'none';
+                        document.getElementById('new_foto_placa_frontal').style.display = 'none';
+                        document.getElementById('aprovacao_manual_placa').style.display = 'none';
+                    }
+                    document.getElementById('alert-success').style.display = 'block';
+                    document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
+                    document.getElementById('container_superior-img').src = 'data:image/jpeg;base64,' + data.container_superior;
+                    document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
+                } else {
+                    document.getElementById('foto-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_frontal-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_frontal_balanca-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('container_superior-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_frontal_balanca-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_traseira_balanca-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_detectada_botao').style.display = 'none';
+                    // document.getElementById('alert-success').style.display = 'none';
+                    // document.getElementById('alert-danger').style.display = 'none';
+                    document.getElementById('placa').style.display = 'none';
+
+                    document.getElementById('aprovacao_manual_placa').style.display = 'none';
+                    document.getElementById('new_foto_placa_frontal').style.display = 'none';
+
+                    // document.getElementById('foto').style.display = 'none';
+                    console.warn("Nenhuma imagem em base64 encontrada.");
+                }
+
+                if (data.mensagem) {
+                    document.getElementById('alert-success-json').innerText = data.mensagem;
+                    document.getElementById('alert-success-json').innerText = 'Programação encontrada! Liberado(a).';
+                }
+
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar CPF:', error);
+                // document.getElementById('foto-img').src = '';
+                document.getElementById('cpf').value = '';
+                document.getElementById('alert-danger-json').innerText = 'Erro na conexão. Verifique sua internet.';
+            });
+    }
+
+    // Chama a função updateCPF a cada 5 segundos
+    setInterval(updateCPF, 1000);
+
+    // Chama a função imediatamente ao carregar a página
+    updateCPF();
+
+    // Função para buscar os dados da programação
+    function buscarProgramacao(cpf) {
+        // Envia a requisição AJAX para buscar os dados da programação
+        fetch('/programacoes/cpf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}' // Adicione isto se usar CSRF no Flask
+            },
+            body: JSON.stringify({ cpf: cpf })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Preenche os campos com os dados retornados
+                    document.getElementById('pessoa').value = data.programacao.pessoa;
+                    document.getElementById('cavalo').value = data.programacao.cavalo;
+                    document.getElementById('carretas').value = data.programacao.carreta;
+                    document.getElementById('inicio_programacao').value = data.programacao.datahora_inicio;
+                    document.getElementById('final_programacao').value = data.programacao.datahora_fim;
+                    // Habilita o botão "Liberar Acesso"
+                    document.getElementById('liberar-acesso').disabled = false;
+
+                } else {
+                    // Limpa os campos
+                    document.getElementById('pessoa').value = '';
+                    document.getElementById('cavalo').value = '';
+                    document.getElementById('carretas').value = '';
+                    document.getElementById('inicio_programacao').value = '';
+                    document.getElementById('final_programacao').value = '';
+                    // Desabilita o botão "Liberar Acesso"
+                    document.getElementById('liberar-acesso').disabled = true;
+
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+            });
+    }
+
+    // Adiciona um listener de evento para o campo CPF
+    document.getElementById('cpf').addEventListener('input', function () {
+        var cpf = this.value;
+
+        // Verifica se o CPF tem 11 dígitos
+        if (cpf.length === 11) {
+            // Chama a função para buscar os dados da programação
+            buscarProgramacao(cpf);
+        }
+    });
+
+    // Função para atualizar a data e hora no canto direito
+    function updateDateTime() {
+        var now = new Date();
+        var formattedDateTime = now.toLocaleString('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+        document.getElementById('datetime').innerText = formattedDateTime;
+    }
+
+    // Atualiza a data e hora a cada segundo
+    setInterval(updateDateTime, 1000);
+
+    // Chama a função imediatamente ao carregar a página
+    updateDateTime();
+
+    // Adiciona um listener de evento para o campo placa
+    document.getElementById('placa').addEventListener('input', function () {
+        var placa = this.value;
+        var cavalo = document.getElementById('cavalo').value;
+        // var status = document.getElementById('status');
+
+        if (placa === cavalo) {
+            document.getElementById('placa').style.borderColor = 'green'; // Adiciona contorno verde
+            document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+            document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+        } else {
+            document.getElementById('placa').style.borderColor = 'red'; // Adiciona contorno vermelho
+            document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+            document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+        }
+    });
+
+    // Verifica o status da placa ao carregar a página
+    var placa = document.getElementById('placa').value;
+    var cavalo = document.getElementById('cavalo').value;
+    // var status = document.getElementById('status');
+
+    if (placa == cavalo) {
+        document.getElementById('placa').style.borderColor = 'green'; // Adiciona contorno verde
+        document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+        document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+    } else {
+        document.getElementById('placa').style.borderColor = 'red'; // Adiciona contorno verde
+        document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+        document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+    }
+
+    // Função para atualizar o campo placa com o conteúdo do arquivo placa.txt
+    function updatePlaca() {
+        fetch('/placa_frontal') // Use '/placa.txt' para acessar o arquivo
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('placa').value = data;
+                // Verifica o status da placa após a atualização
+                var placa = document.getElementById('placa').value;
+                var cavalo = document.getElementById('cavalo').value;
+                if (placa === cavalo) {
+                    document.getElementById('placa').style.borderColor = 'green'; // Adiciona contorno verde
+                    document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+                    document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+                } else {
+                    document.getElementById('placa').style.borderColor = 'red'; // Adiciona contorno vermelho
+                    document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+                    document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar placa:', error);
+                document.getElementById('placa').value = 'N/A'; // Se não encontrar a placa, define o valor como 'Não Encontrado'
+            });
+    }
+
+    // Chama a função updatePlaca a cada 3 segundos
+    setInterval(updatePlaca, 1000);
+
+    // Chama a função imediatamente ao carregar a página
+    updatePlaca();
+
+    // Função para atualizar o campo placa da balança com o conteúdo do arquivo placa.txt
+    function updatePlacaBalanca() {
+        fetch('/placas_balanca')
+            .then(response => response.json()) // Alterado para response.json() para tratar o JSON
+            .then(data => {
+                // Define o valor dos inputs com os dados do JSON
+                document.getElementById('placa_traseira_balanca').value = data.placa_traseira;
+                document.getElementById('placa_frontal_balanca').value = data.placa_frontal;
+
+                var pessoa = document.getElementById('pessoa').value;
+                var facialBalanca = document.getElementById('facial-balanca').value;
+
+                if (facialBalanca === pessoa) {
+                    document.getElementById('facial-balanca').style.borderColor = 'green';
+                    document.getElementById('facial-balanca').style.borderWidth = '5px';
+                    document.getElementById('facial-balanca').style.borderStyle = 'solid';
+                } else {
+                    document.getElementById('facial-balanca').style.borderColor = 'red';
+                    document.getElementById('facial-balanca').style.borderWidth = '5px';
+                    document.getElementById('facial-balanca').style.borderStyle = 'solid';
+                }
+
+                var cavalo = document.getElementById('cavalo').value;
+                var carretas = document.getElementById('carretas').value;
+                var placa_frontal_balanca = document.getElementById('placa_frontal_balanca').value;
+                var placa_traseira_balanca = document.getElementById('placa_traseira_balanca').value;
+
+                // Adiciona a verificação e o alerta de sucesso
+                if (placa_frontal_balanca === cavalo && placa_traseira_balanca === carretas) {
+                    // alert('As placas conferem com a programação!');
+                    document.getElementById('alert-success-balanca').innerText = 'As placas conferem com a programação!';
+                    document.getElementById('alert-success-balanca').style.display = 'block'; // Mostra o alerta
+                    document.getElementById('alert-danger-balanca').style.display = 'none'; // Mostra o alerta
+
+                    setTimeout(function () {
+                        $('#alert-success').hide(); // Esconde o alerta após 3 segundos
+                    }, 500);
+
+                } else {
+                    document.getElementById('alert-success-balanca').style.display = 'none'; // Mostra o alerta
+                    document.getElementById('alert-danger-balanca').innerText = 'Acesso divergente da programação!';
+                    document.getElementById('alert-danger-balanca').style.display = 'block'; // Mostra o alerta
+                }
+
+                if (placa_frontal_balanca === cavalo) {
+                    document.getElementById('placa_frontal_balanca').style.borderColor = 'green'; // Adiciona contorno verde
+                    document.getElementById('placa_frontal_balanca').style.borderWidth = '5px'; // Define a largura da borda como 5px
+                    document.getElementById('placa_frontal_balanca').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+                } else {
+                    document.getElementById('placa_frontal_balanca').style.borderColor = 'red'; // Adiciona contorno vermelho
+                    document.getElementById('placa_frontal_balanca').style.borderWidth = '5px'; // Define a largura da borda como 5px
+                    document.getElementById('placa_frontal_balanca').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+                }
+
+                if (placa_traseira_balanca === carretas) {
+                    document.getElementById('placa_traseira_balanca').style.borderColor = 'green'; // Adiciona contorno verde
+                    document.getElementById('placa_traseira_balanca').style.borderWidth = '5px'; // Define a largura da borda como 5px
+                    document.getElementById('placa_traseira_balanca').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+                } else {
+                    document.getElementById('placa_traseira_balanca').style.borderColor = 'red'; // Adiciona contorno vermelho
+                    document.getElementById('placa_traseira_balanca').style.borderWidth = '5px'; // Define a largura da borda como 5px
+                    document.getElementById('placa_traseira_balanca').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+                }
+
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar placa:', error);
+                document.getElementById('placa_traseira_balanca').value = 'N/A';
+                document.getElementById('placa_frontal_balanca').value = 'N/A';
+            });
+    }
+
+    // Chama a função updatePlacaBalanca a cada 3 segundos
+    setInterval(updatePlacaBalanca, 1000);
+
+    // Chama a função imediatamente ao carregar a página
+    updatePlacaBalanca();
+
+    function novaFotoPlacaFrontal() {
+        // Desabilita o botão e mostra o ícone de carregamento
+        const button = document.getElementById('new_foto_placa_frontal');
+        const loadingIcon = document.getElementById('loading-icon');
+        const cameraIcon = document.getElementById('camera-icon');
+
+        button.disabled = true;
+        loadingIcon.style.display = 'inline-block';
+        cameraIcon.style.display = 'none';
+
+
+        fetch('/new_foto_placa_frontal', { method: 'GET' })
+            .then(response => {
+                if (response.ok) {
+                    return response.json(); // Aguarda a resposta JSON
+                } else {
+                    console.error('Erro ao tirar nova foto:', response.status);
+                    return Promise.reject('Erro ao tirar nova foto');
+                }
+            })
+            .then(data => { // Executa após receber a resposta JSON
+                console.log('Resposta do servidor:', data);
+                updateCPF(); // Chama updateCPF após o retorno da requisição
+            })
+            .catch(error => {
+                console.error('Erro ao tirar nova foto:', error);
+            })
+            .finally(() => {
+                // Habilita o botão, esconde o ícone de carregamento e mostra o ícone da câmera após o retorno
+                button.disabled = false;
+                loadingIcon.style.display = 'none';
+                cameraIcon.style.display = 'inline-block';
+            });
+    }
+
+    function aprovarPlacaManualmente() {
+        const cavalo = document.getElementById('cavalo').value;
+        // Envia a requisição POST para /placa_manual
+        fetch('/placa_manual', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded', // Define o cabeçalho corretamente
+                'X-CSRFToken': '{{ csrf_token() }}' // Inclui o token CSRF se estiver usando
+            },
+            body: `placa=${cavalo}` // Envia a placa como dados do formulário
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Placa gravada com sucesso!');
+                    // Adicione aqui o código para atualizar a interface, se necessário
+                    updatePlaca(); // Atualiza o campo 'placa' na interface
+                } else {
+                    console.error('Erro ao gravar a placa:', response.status);
+                    // Adicione aqui o código para tratar o erro na interface, se necessário
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao gravar a placa:', error);
+                // Adicione aqui o código para tratar o erro na interface, se necessário
+            });
+    }
+
+    function novasFotosPlacasBalanca() {
+        // Desabilita o botão e mostra o ícone de carregamento
+        const button = document.getElementById('new_foto_placa_traseira_balanca');
+        const loadingIcon = document.getElementById('loading-icon-traseira');
+        const cameraIcon = document.getElementById('camera-icon-traseira');
+
+        button.disabled = true;
+        loadingIcon.style.display = 'inline-block';
+        cameraIcon.style.display = 'none';
+
+        fetch('/new_foto_placas_balanca', { method: 'GET' })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    console.error('Erro ao tirar nova foto:', response.status);
+                    return Promise.reject('Erro ao tirar nova foto');
+                }
+            })
+            .then(data => {
+                console.log('Resposta do servidor:', data);
+                // Atualize a interface com a nova foto, se necessário.
+                // Sugestão: chame uma função para atualizar a imagem, similar a updateCPF().
+                updateCPF(); // Exemplo: atualiza a interface após tirar a foto.
+            })
+            .catch(error => {
+                console.error('Erro ao tirar nova foto:', error);
+            })
+            .finally(() => {
+                // Habilita o botão e esconde o ícone de carregamento
+                button.disabled = false;
+                loadingIcon.style.display = 'none';
+                cameraIcon.style.display = 'inline-block';
+            });
+    }
+
+    function aprovarPlacaManualmenteBalanca() {
+        const cavalo = document.getElementById('cavalo').value;
+        const carretas = document.getElementById('carretas').value;
+        // Aqui você precisa obter o valor da placa traseira.  Como não há um campo para isso na interface, você precisará defini-lo de alguma forma.
+        // Por exemplo, se a placa traseira for sempre a mesma, você pode defini-la diretamente:
+
+        // Envia a requisição POST para /placa_manual_balanca
+        fetch('/placa_manual_balanca', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}' // Inclui o token CSRF se estiver usando
+            },
+            body: `placa_frontal=${cavalo}&placa_traseira=${carretas}` // Envia ambas as placas
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Placas gravadas com sucesso!');
+                    // Adicione aqui o código para atualizar a interface, se necessário
+                    updatePlacaBalanca(); // Atualiza as placas na interface
+
+                } else {
+                    console.error('Erro ao gravar as placas:', response.status);
+                    // Adicione aqui o código para tratar o erro na interface, se necessário
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao gravar as placas:', error);
+                // Adicione aqui o código para tratar o erro na interface, se necessário
+            });
+    }
+
+    function aprovarPlacaFrontalManualmenteBalanca() {
+        const cavalo = document.getElementById('cavalo').value;
+        const carretas = document.getElementById('carretas').value;
+        // Aqui você precisa obter o valor da placa traseira.  Como não há um campo para isso na interface, você precisará defini-lo de alguma forma.
+        // Por exemplo, se a placa traseira for sempre a mesma, você pode defini-la diretamente:
+
+        // Envia a requisição POST para /placa_manual_balanca
+        fetch('/placa_frontal_manual_balanca', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}' // Inclui o token CSRF se estiver usando
+            },
+            body: `placa_frontal=${cavalo}&placa_traseira=${carretas}` // Envia ambas as placas
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Placas gravadas com sucesso!');
+                    // Adicione aqui o código para atualizar a interface, se necessário
+                    updatePlacaBalanca(); // Atualiza as placas na interface
+
+                } else {
+                    console.error('Erro ao gravar as placas:', response.status);
+                    // Adicione aqui o código para tratar o erro na interface, se necessário
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao gravar as placas:', error);
+                // Adicione aqui o código para tratar o erro na interface, se necessário
+            });
+    }
+
+    function aprovarPlacaTraseiraManualmenteBalanca() {
+        const cavalo = document.getElementById('cavalo').value;
+        const carretas = document.getElementById('carretas').value;
+        // Aqui você precisa obter o valor da placa traseira.  Como não há um campo para isso na interface, você precisará defini-lo de alguma forma.
+        // Por exemplo, se a placa traseira for sempre a mesma, você pode defini-la diretamente:
+
+        // Envia a requisição POST para /placa_manual_balanca
+        fetch('/placa_traseira_manual_balanca', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token() }}' // Inclui o token CSRF se estiver usando
+            },
+            body: `placa_frontal=${cavalo}&placa_traseira=${carretas}` // Envia ambas as placas
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Placas gravadas com sucesso!');
+                    // Adicione aqui o código para atualizar a interface, se necessário
+                    updatePlacaBalanca(); // Atualiza as placas na interface
+
+                } else {
+                    console.error('Erro ao gravar as placas:', response.status);
+                    // Adicione aqui o código para tratar o erro na interface, se necessário
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao gravar as placas:', error);
+                // Adicione aqui o código para tratar o erro na interface, se necessário
+            });
+    }
+
+    function atualizarFilaMotoristas() {
+        fetch('/fila_motoristas_pesar')
+            .then(response => response.json())
+            .then(data => {
+                // Cria a tabela com classes Bootstrap
+                let table = document.createElement('table');
+                table.classList.add('table', 'table-striped', 'table-hover');
+                table.id = 'motoristasTable'; // Adiciona um ID à tabela
+
+                let thead = table.createTHead();
+                let row = thead.insertRow();
+                ['ID', 'Direção', 'Motorista', 'CPF', 'Data/Hora'].forEach(header => {
+                    let th = document.createElement('th');
+                    th.textContent = header;
+                    row.appendChild(th);
+                });
+
+                let tbody = table.createTBody();
+                data.forEach(item => {
+                    let row = tbody.insertRow();
+                    ['id', 'direcao', 'pessoa', 'cpf', 'created_at'].forEach(key => {
+                        let cell = row.insertCell();
+                        let text = document.createTextNode(item[key] || '');
+                        cell.appendChild(text);
+                    });
+                });
+
+                let filaMotoristasDiv = document.getElementById('fila-motoristas');
+                filaMotoristasDiv.innerHTML = '';
+                filaMotoristasDiv.appendChild(table);
+
+                // Inicializa o DataTables com ordenação desabilitada
+                $(`#motoristasTable`).DataTable({
+                    "order": [] // Desabilita a ordenação inicial
+                });
+
+                // Verifica se a fila está vazia
+                if (data.length === 0) {
+                    // Fecha o modal se estiver aberto
+                    $('#placaModal').modal('hide');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar a fila de motoristas:', error);
+                document.getElementById('fila-motoristas').innerHTML = '<p>Erro ao carregar a fila.</p>';
+            });
+    }
+
+    // Chama a função imediatamente ao carregar a página
+    atualizarFilaMotoristas();
+
+    // Atualiza a fila a cada 3 segundos
+    setInterval(atualizarFilaMotoristas, 1000);
+
+</script>
+
+{% endblock %}
+
+{% include 'footer.html' %}

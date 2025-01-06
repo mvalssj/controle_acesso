@@ -1,0 +1,278 @@
+{% extends 'header.html' %}
+
+{% block title %}Programaçoes{% endblock %}
+{% block content %}
+
+<div class="container">
+  <div class="m-3">
+    <button type="button" class="apple-button" data-toggle="modal" data-target="#novoProgramacaoModal">Nova
+      Programação</button>
+  </div>
+
+  <div class="container p-3 apple-border apple-table">
+    <table id="programacoesTable" class="table table-striped table-bordered" style="width: 100%;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Pessoa</th>
+          <th>CPF</th>
+          <th>Tipo</th> <!-- Adicionando a coluna "Tipo" -->
+          <th>Início Prog.</th>
+          <th>Final Prog.</th>
+          <th>Cavalo/Frontal</th>
+          <th>Carreta/Traseira</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for programacao in programacoes %}
+        <tr data-toggle="modal" data-target="#programacaoModal" data-id="{{ programacao.id }}"
+          data-datahora_inicio="{{ programacao.datahora_inicio }}" data-datahora_fim="{{ programacao.datahora_fim }}"
+          data-cavalo="{{ programacao.cavalo }}" data-carreta="{{ programacao.carreta }}"
+          data-pessoa="{{ programacao.pessoa }}" data-cpf="{{ programacao.cpf }}" data-tipo="{{ programacao.id_tipo }}"
+          data-data_cadastro="{{ programacao.created_at }}" data-data_modificacao="{{ programacao.updated_at }}">
+          <td>{{ programacao.id }}</td>
+          <td>{{ programacao.pessoa }}</td>
+          <td>{{ programacao.cpf }}</td>
+          <td>
+            {% for tipo in programacao_tipo %}
+            {% if tipo.id == programacao.id_tipo %}
+            {{ tipo.nome }}
+            {% endif %}
+            {% endfor %}
+          </td>
+          <td>{{ programacao.datahora_inicio }}</td>
+          <td>{{ programacao.datahora_fim }}</td>
+          <td>{{ programacao.cavalo }}</td>
+          <td>{{ programacao.carreta }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'footer.html' %}
+
+<!-- Modal para nova programação -->
+<div class="modal fade" id="novoProgramacaoModal" tabindex="-1" role="dialog"
+  aria-labelledby="novoProgramacaoModalLabel" aria-hidden="true" style="z-index: 10001;">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="novoProgramacaoModalLabel">Nova Programação</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="novaProgramacaoForm" method="POST" enctype="multipart/form-data">
+          <div class="form-row">
+            <!-- Coluna 1 (Câmera) -->
+            <div class="form-group col-md-4 text-center">
+              <!-- Container da câmera para centralizar a mensagem de carregamento e a foto capturada -->
+              <div id="camera-container">
+                <!-- Mensagem de carregamento -->
+                <div id="cameraLoading">
+                  Carregando<span id="loadingDots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+
+                <!-- Elementos da câmera e do canvas -->
+                <video id="camera" width="320" class="m-2" height="240" autoplay
+                  style="border-radius: 15px; border: 2px solid #ccc;"></video>
+                <canvas id="fotoCanvas" class="m-2" width="320" height="240"
+                  style="border-radius: 15px; border: 2px solid #ccc; display: none;"></canvas>
+                <input type="hidden" id="foto" name="foto">
+
+
+                <input type="hidden" id="foto" name="foto">
+                <!-- Botão centralizado no container da câmera -->
+                <button type="button" id="captureButton" class="btn btn-secondary btn-lg mt-2">
+                  <i class="fas fa-camera"></i>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Coluna 2 e 3 (Campos do formulário) -->
+            <div class="form-group col-md-8">
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="pessoa">Nome:</label>
+                  <input type="text" class="form-control" id="pessoa" required placeholder="Nome Completo">
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="cpf">CPF:</label>
+                  <input type="text" class="form-control" id="cpf" placeholder="000.000.000-00" required
+                    pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" title="Digite o CPF no formato: 000.000.000-00" maxlength="14"
+                    oninput="formatarCPF(this)">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="datahora_inicio">Data Hora Início:</label>
+                  <input type="datetime-local" class="form-control" id="datahora_inicio" required>
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="datahora_fim">Data Hora Fim:</label>
+                  <input type="datetime-local" class="form-control" id="datahora_fim" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="cavalo">Cavalo/Frontal:</label>
+                  <input type="text" class="form-control" id="cavalo" placeholder="ABC1234">
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="carreta">Carreta/Traseira:</label>
+                  <input type="text" class="form-control" id="carreta" placeholder="ABC1234">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="id_tipo">Tipo:</label>
+                  <select class="form-control" id="id_tipo" name="id_tipo" required>
+                    <option value="">Selecione um tipo</option>
+                    {% for tipo in programacao_tipo %}
+                    <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-primary" id="salvarProgramacaoBtn">Cadastrar Programação</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para edição de programação -->
+<div class="modal fade" id="editarProgramacaoModal" tabindex="-1" role="dialog"
+  aria-labelledby="editarProgramacaoModalLabel" aria-hidden="true" style="z-index: 10001;">
+  <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editarProgramacaoModalLabel">Editar Programação</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editarProgramacaoForm" method="POST" enctype="multipart/form-data">
+          <div class="form-row">
+            <!-- Coluna 1 (Câmera) -->
+            <div class="form-group col-md-4 text-center">
+              <!-- Container da câmera para centralizar a mensagem de carregamento e a foto capturada -->
+              <div id="editar-camera-container">
+                <!-- Mensagem de carregamento -->
+                <div id="editarCameraLoading">
+                  Carregando<span id="loadingDots"><span>.</span><span>.</span><span>.</span></span>
+                </div>
+
+                <!-- Elementos da câmera e do canvas -->
+                <video id="editarCamera" width="320" class="m-2" height="240" autoplay
+                  style="border-radius: 15px; border: 2px solid #ccc;"></video>
+
+                <canvas id="editarFotoCanvas" class="m-2" width="320" height="240"
+                  style="border-radius: 15px; border: 2px solid #ccc; display: none;"></canvas>
+
+                <input type="hidden" id="editarFoto" name="foto">
+
+                <!-- Botão para capturar a foto -->
+                <button type="button" id="editarCaptureButton" class="btn btn-secondary btn-lg mt-2">
+                  <i class="fas fa-camera"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Coluna 2 e 3 (Campos do formulário) -->
+            <div class="form-group col-md-8">
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="editarPessoa">Nome:</label>
+                  <input type="text" class="form-control" id="editarPessoa" required placeholder="Nome Completo">
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="editarCpf">CPF:</label>
+                  <input type="text" class="form-control" id="editarCpf" placeholder="000.000.000-00" required
+                  pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" title="Digite o CPF no formato: 000.000.000-00" maxlength="14"
+                  oninput="formatarCPF(this)">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="editarDatahoraInicio">Data Hora Início:</label>
+                  <input type="datetime-local" class="form-control" id="editarDatahoraInicio" required>
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="editarDatahoraFim">Data Hora Fim:</label>
+                  <input type="datetime-local" class="form-control" id="editarDatahoraFim" required>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="editarCavalo">Cavalo/Frontal:</label>
+                  <input type="text" class="form-control" id="editarCavalo" placeholder="ABC1234">
+                </div>
+                <div class="form-group col-md-6">
+                  <label for="editarCarreta">Carreta/Traseira:</label>
+                  <input type="text" class="form-control" id="editarCarreta" placeholder="ABC1234">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group col-md-6">
+                  <label for="editarTipo">Tipo:</label>
+                  <select class="form-control" id="editarTipo" name="tipo" required>
+                    <option value="">Selecione um tipo</option>
+                    {% for tipo in programacao_tipo %}
+                    <option value="{{ tipo.id }}">{{ tipo.nome }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group col-md-6" hidden>
+                  <label for="id_equipamento">ID no Equipamento:</label>
+                  <input class="form-control" id="id_equipamento" name="id_equipamento">
+                </div>
+                <div class="form-group col-md-6" hidden>
+                  <label for="editarCpfAtual">CPF Atual:</label>
+                  <input class="form-control" id="editarCpfAtual" name="editarCpfAtual">
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+        <button type="button" class="btn btn-primary" id="salvarEdicaoBtn">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Desabilita o botão de salvar e mostra o loading ao clicar
+  $('#salvarProgramacaoBtn').click(function() {
+    $(this).prop('disabled', true);
+    $('#cameraLoading').show();
+  });
+
+  // Desabilita o botão de salvar e mostra o loading ao clicar
+  $('#salvarEdicaoBtn').click(function() {
+    $(this).prop('disabled', true);
+    $('#editarCameraLoading').show();
+  });
+  
+</script>
+
+
+{% endblock %}

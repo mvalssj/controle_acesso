@@ -364,6 +364,15 @@ class ProgramacaoController:
                     device_ip_in = ip_entrada
                     device_ip_out = ip_saida
             # Captura o ip das biometrias
+            direcao = data.get('direcao')
+            print('#### Direção:', direcao)
+            
+            if direcao == 'IN':
+                device_ip = device_ip_in
+            elif direcao == 'OUT':
+                device_ip = device_ip_out
+            else:
+                return jsonify({'status': 'error', 'message': 'Direção inválida.'}), 400
 
             # Obtém o CPF enviado via JSON
             data = request.get_json()
@@ -374,7 +383,7 @@ class ProgramacaoController:
                 return jsonify({'status': 'error', 'message': 'CPF não fornecido.'}), 400
 
             # URL do equipamento com o CPF
-            url_id = f"http://{device_ip_in}/cgi-bin/AccessCard.cgi?action=list&CardNoList[0]={cpf}"
+            url_id = f"http://{device_ip}/cgi-bin/AccessCard.cgi?action=list&CardNoList[0]={cpf}"
 
             try:
                 # Autenticação HTTP Digest
@@ -397,7 +406,7 @@ class ProgramacaoController:
                     else:
                         print("UserID não encontrado na resposta.")
 
-                    url_foto = f"http://{device_ip_in}/cgi-bin/AccessFace.cgi?action=list&UserIDList[0]={user_id}"
+                    url_foto = f"http://{device_ip}/cgi-bin/AccessFace.cgi?action=list&UserIDList[0]={user_id}"
 
                     # Faz a requisição ao equipamento para capturar a foto
                     response_foto = requests.get(url_foto, auth=digest_auth, stream=True, timeout=20, verify=False)

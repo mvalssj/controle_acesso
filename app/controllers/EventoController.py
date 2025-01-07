@@ -1,7 +1,7 @@
 import datetime # Importa o módulo datetime
 import time
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from app.models import db, Evento, Unidade, Dashboard, Programacao, Equipamento
+from app.models import db, Evento, Unidade, Dashboard, Programacao, Equipamento, ProgramacaoCheck
 from app.helpers.Intelbras import Usuarios, UserAPI
 from sqlalchemy import func, and_, or_
 from app.extensions import csrf  # Agora importa do extensions.py
@@ -1185,6 +1185,7 @@ class EventoController:
                 ultimo_evento = eventos_pesar[0] if eventos_pesar else None
                 
                 pessoa = ultimo_evento.pessoa
+                evento_id = ultimo_evento.id
 
                 cpf_primeiro_da_fila = ultimo_evento.cpf if ultimo_evento else None
 
@@ -1237,6 +1238,7 @@ class EventoController:
                             evento = ultimo_evento
                             
                             if evento:
+
                                 evento.lpr = lpr
                                 evento.pesar = "N"
                                 evento.placa_1 = placa_frontal
@@ -1249,6 +1251,50 @@ class EventoController:
                         except Exception as e:
                             print(f"Erro ao atualizar o evento: {e}")
                             return jsonify({"error": "Erro ao atualizar o evento."}), 500
+
+                # Cria um novo registro na tabela programacao_check
+                    novo_check = ProgramacaoCheck(
+                        evento_id=evento_id,
+                        traseira_progrmacao=carreta_programacao,
+                        frontal_programacao=cavalo_programacao,
+                        pessoa_programacao=pessoa_programacao,
+                        cpf_programacao=cpf_programacao,
+                        frontal_detectada=placa_frontal,
+                        traseira_detectada=placa_traseira,
+                        pessoa_detectada=pessoa,  # Certifique-se de que 'pessoa' está definido corretamente
+                        cpf_detectado=cpf_primeiro_da_fila,
+                        frontal_corrigida = '', # Armazena a placa corrigida, se houver
+                        traseira_corrigida = '', # Armazena a placa corrigida, se houver
+                        pessoa_corrigida = '', # Armazena o nome da pessoa corrigida, se houver
+                        cpf_corrigido = '', # Armazena o CPF corrigido, se houver
+                        frontal_status=status_frontal,
+                        traseira_status=status_traseira,
+                        pessoa_status=status_pessoa,
+                        cpf_status=status_pessoa, # Usando status_pessoa para cpf_status, ajuste se necessário
+                        geral_status=status_geral # Usando status_geral para cpf_status, ajuste se necessário
+                    )
+
+                    # Verifica se um registro com o mesmo evento_id já existe
+                    existing_check = ProgramacaoCheck.query.filter_by(evento_id=evento_id).first()
+
+                    if existing_check is None:  # Se não existir, adiciona o novo registro
+                        db.session.add(novo_check)
+                        db.session.commit()
+                        print("Novo check adicionado com sucesso!")
+                    else:
+                        if status_frontal == "ok":
+                            print(f"Um check com evento_id = {evento_id} já existe no banco de dados. Atualizando...")
+                            existing_check.frontal_corrigida = placa_frontal  # Mantém ou atualiza conforme necessário
+                        if status_traseira == "ok":
+                            existing_check.traseira_corrigida = placa_traseira  # Mantém ou atualiza conforme necessário
+                        if status_pessoa == "ok":
+                            existing_check.pessoa_corrigida = pessoa  # Mantém ou atualiza conforme necessário
+                            existing_check.cpf_corrigido = cpf_primeiro_da_fila  # Mantém ou atualiza conforme 
+                        existing_check.frontal_detectada = placa_frontal 
+                        existing_check.traseira_detectada = placa_traseira     
+                        existing_check.geral_status = status_geral
+                        db.session.commit()
+                        print("Check atualizado com sucesso!")
 
                     return jsonify({
                         "placa_frontal": placa_frontal, 
@@ -1263,7 +1309,7 @@ class EventoController:
                         "status_traseira": status_traseira,
                         "status_pessoa": status_pessoa,
                         "status_geral": status_geral
-                    })
+                    }) 
 
                 except requests.exceptions.HTTPError as e:
                     print(f"Erro HTTP ao buscar programação: {e}")

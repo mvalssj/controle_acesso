@@ -284,6 +284,7 @@
                 document.getElementById('cpf').value = data.cpf || '';
 
                 buscarProgramacao(data.cpf);
+                console.log('######## Data ##########', data);
 
                 //fotos das placas
                 document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
@@ -292,7 +293,7 @@
                 document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
                 //fotos das placas
 
-                if (True) {
+                if (true) {
                     console.log('########## Entrou aqui!!!!!: ')
                     document.getElementById('foto-img').src = 'data:image/jpeg;base64,' + data.imagem_base64;
                     document.getElementById('foto').style.display = 'block';

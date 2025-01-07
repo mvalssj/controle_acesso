@@ -22,7 +22,7 @@
 
 
         <div class="apple-form" id="foto" style="position: absolute; top: 80px; left: 20px; font-size: 16px;">
-            <img id="placa_traseira_balanca-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+            <img id="foto-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
             style="width: 100%; border-radius: 10px; display: block; margin: 0 auto;">
             <button id="liberar-acesso" class="btn btn-success"
                 style="position: absolute; bottom: 10px; right: 10px; display: none;" >Liberar Acesso</button>
@@ -38,7 +38,7 @@
         <div class="apple-form" id="placa_detectada"
             style="position: absolute; top: 200px; right: 20px; font-size: 16px;">
 
-            <img id="placa_traseira_balanca-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+            <img id="placa_frontal-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
             style="width: 70%; border-radius: 10px; display: block; margin: 0 auto;">
             <div class="m-3">
                 <!-- <label for="placa" class="mr-2">Placa detectada: </label> -->
@@ -103,7 +103,7 @@
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="apple-form" style="position: relative; top: 0; left: 0; font-size: 16px;">
-                                    <img id="placa_traseira_balanca-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+                                    <img id="placa_frontal_balanca-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
                                         style="width: 70%; border-radius: 10px; display: block; margin: 0 auto;">
                                     <div class="m-3">
                                         <label for="placa-1">Placa Frontal: </label>
@@ -114,7 +114,7 @@
                             </div>
                             <div class="col-md-4 d-flex justify-content-center align-items-center">
                                 <div class="apple-form" style="position: relative; font-size: 16px;">
-                                    <img id="placa_traseira_balanca-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+                                    <img id="container_superior-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
                                         style="width: 70%; border-radius: 10px; display: block; margin: 0 auto;">
                                     <div class="m-3">
                                         <label for="placa-2" hidden>Superior Container: </label>
@@ -204,10 +204,7 @@
     function updateCPF() {
         fetch('/ultimo_cpf')
             .then(response => response.json())
-            .then(data => {
-
-                console.log('######## Recebito do back: ', data)
-
+            .then(data => {                
                 if (!data) {
                     console.error("Dados inválidos recebidos de /ultimo_cpf");
                     document.getElementById('foto-img').src = ''; // Define a imagem como vazia em caso de erro
@@ -221,16 +218,18 @@
 
                 document.getElementById('cpf').value = data.cpf || '';
                 document.getElementById('id').value = data.id || '';
-
+                    console.log('######## Recebido do back: #############', data)
                 buscarProgramacao(data.cpf);
 
                 // Mostra a imagem somente se houver base64
                 if (data.imagem_base64) {
+
                     document.getElementById('foto-img').src = 'data:image/jpeg;base64,' + data.imagem_base64;
 
                     if (document.getElementById('cavalo').value != '') { // Verifica se o input cavalo está vazio
-
+             
                     } else {
+                        
                         document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.pedestre;
                         // document.querySelector('label[for="placa"]').style.display = 'none'; // Esconde o label
                         document.getElementById('placa').style.display = 'none'; // Esconde o input
@@ -262,7 +261,6 @@
                     document.getElementById('liberar-acesso').style.display = 'block';
                     document.getElementById('alert-danger-json').innerText = 'Bloqueado no AntiPassback.';
 
-                    // document.getElementById('alert-danger-json').innerText = '';
                 }
 
             })

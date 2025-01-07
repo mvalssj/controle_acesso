@@ -281,3 +281,26 @@ class SystemUsuarioLog(BaseModel):
     id_usuario_created = db.Column(db.BigInteger, nullable=True)
     id_usuario_updated = db.Column(db.BigInteger, nullable=True)
     id_usuario_deleted = db.Column(db.BigInteger, nullable=True)
+
+class ProgramacaoCheck(BaseModel):
+    __tablename__ = 'programacao_check'
+
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    evento_id = db.Column(db.BigInteger, nullable=False)
+    traseira_progrmacao = db.Column(db.String(10), nullable=True)
+    frontal_programacao = db.Column(db.String(10), nullable=True)
+    pessoa_programacao = db.Column(db.String(100), nullable=True)
+    cpf_programacao = db.Column(db.String(11), nullable=True)
+    frontal_detectada = db.Column(db.String(10), nullable=True)
+    traseira_detectada = db.Column(db.String(10), nullable=True)
+    pessoa_detectada = db.Column(db.String(100), nullable=True)
+    cpf_detectado = db.Column(db.String(10), nullable=True)
+    frontal_corrigida = db.Column(db.String(10), nullable=True)
+    traseira_corrigida = db.Column(db.String(10), nullable=True)
+    pessoa_corrigida = db.Column(db.String(100), nullable=True)
+    cpf_corrigido = db.Column(db.String(11), nullable=True)
+    frontal_status = db.Column(db.Enum('OK', 'NOK'), nullable=True)
+    traseira_status = db.Column(db.Enum('OK', 'NOK'), nullable=True)
+    pessoa_status = db.Column(db.Enum('OK', 'NOK'), nullable=True)
+    cpf_status = db.Column(db.Enum('OK', 'NOK'), nullable=True)
+    geral_status = db.Column(db.Enum('OK', 'NOK'), nullable=True)

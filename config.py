@@ -1,8 +1,8 @@
 # config.py
 unidade = 5 #TMG
 TIMEZONE = 'America/Sao_Paulo'
-device_ip_in = '192.168.10.62'
-device_ip_out = '192.168.10.63'
+device_ip_in = '192.168.9.11'
+device_ip_out = '192.168.9.12'
 device_ip_in_truck = '192.168.10.63'
 device_ip_in_car = '192.168.10.63'
 device_ip_out_truck = '192.168.10.63'

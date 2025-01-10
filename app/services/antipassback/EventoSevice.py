@@ -80,6 +80,6 @@ class EventRecorder:
     def run(self):
         while True:
             lines = self.fetch_records()
-            print("Aguardando Biometria...")
+            print("Aguardando Biometria...", self.device_ip_in)
             self.send_records(lines)
             time.sleep(2)

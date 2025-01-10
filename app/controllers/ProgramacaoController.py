@@ -366,7 +366,7 @@ class ProgramacaoController:
             # Captura o ip das biometrias
             direcao = data.get('direcao')
             print('#### Direção:', direcao)
-            
+
             if direcao == 'IN':
                 device_ip = device_ip_in
             elif direcao == 'OUT':
@@ -471,8 +471,8 @@ class ProgramacaoController:
                         data = request.get_json()
                     
                         # Usa 'device_ip_out' se estiver presente nos dados, senão usa 'device_ip_in'
-                        current_device_ip = data.get('device_ip_out', device_ip_in)
-                        
+                        current_device_ip = data.get('device_ip_out', device_ip_in)                     
+
                         if data.get('device_ip_out'):
                             current_base_url = data.get('base_url_out', base_url_out)
                             id_user = data['id_user']
@@ -514,7 +514,7 @@ class ProgramacaoController:
 
                         # Criação da instância da API e envio dos dados do usuário
                         api = UserAPI(current_base_url, username, password)
-                        status_code, response_content = api.send_user("insertMulti", user_data)
+                        api.send_user("insertMulti", user_data)
 
                         if True:
                         # if status_code == 200:
@@ -530,12 +530,14 @@ class ProgramacaoController:
                                 ]
                             }
 
-                            print(card_data)
-                            card_url = f"http://{current_device_ip}/cgi-bin/AccessCard.cgi?action=insertMulti"
+                            # print('####### DADOS DO CPF: ',card_data)
+
+                            card_url = f"http://{device_ip_out}/cgi-bin/AccessCard.cgi?action=insertMulti"
+                            print('######### URL ATUALIZAR CPF: ',card_url)
                             card_api = UserAPI(card_url, username, password)
                             card_status_code, card_response_content = card_api.send_user("insertMulti", card_data)
 
-                            print("Status Card", card_status_code)
+                            print("Status Card", card_status_code, card_response_content)
 
                             # if True:
                             if card_status_code == 200:
@@ -548,22 +550,29 @@ class ProgramacaoController:
                                         foto_bytes = base64.b64decode(foto_base64)
                                         # Cria um objeto Imagem a partir dos bytes
                                         imagem = Image.open(io.BytesIO(foto_bytes))
-                                        # Salva a imagem em um arquivo temporário
+                                        # Salva a imagem em um arquivo temporário                                        
                                         imagem.save(os.path.join(path_foto, 'foto.jpg'))
                                         image_path = os.path.join(path_foto, 'foto.jpg')
                                         biometric_registration = BiometricRegistration(current_device_ip, username, password)
                                         biometric_registration.register_face(str(id_user), image_path)
-                                        return jsonify(success=True, message='Usuário, CPF/CardNo e biometria cadastrados com sucesso!')
-                                    except Exception as e:
-                                        return jsonify(success=False, message=f"Erro ao decodificar a biometria")
-                                else:
-                                    return jsonify(success=False, message='Foto da biometria não encontrada.')
-                            else:
-                                return jsonify(success=False, message='Erro ao cadastrar CPF/CardNo.')
-                        else:
-                            return jsonify(success=False, message='Erro ao cadastrar usuário.')
 
-                    return jsonify(success=False, message='Requisição inválida.')
+                                        # return jsonify(success=True, message='Usuário, CPF/CardNo e biometria cadastrados com sucesso!')
+                                        print('Usuário, CPF/CardNo e biometria cadastrados com sucesso!')
+                                    except Exception as e:
+                                        # return jsonify(success=False, message=f"Erro ao decodificar a biometria")
+                                        print("Erro ao decodificar a biometria")
+                                else:
+                                    # return jsonify(success=False, message='Foto da biometria não encontrada.')
+                                    print('Foto da biometria não encontrada.')
+                            else:
+                                # return jsonify(success=False, message='Erro ao cadastrar CPF/CardNo.')
+                                print('Erro ao cadastrar CPF/CardNo.')
+                        else:
+                            # return jsonify(success=False, message='Erro ao cadastrar usuário.')
+                            print('Erro ao cadastrar usuário.')
+
+                    # return jsonify(success=False, message='Requisição inválida.')
+                    print('Requisição inválida.')
                 
         @self.blueprint.route('/cadastro/pessoa', methods=['POST'])
         @csrf.exempt

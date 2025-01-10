@@ -1,5 +1,6 @@
 from app import app
 from app.services.antipassback.EventoSevice import EventRecorder
+from app.controllers.EquipamentoController import EquipamentoController # Importe o controlador
 from threading import Thread
 import os
 import sys
@@ -11,7 +12,7 @@ import logging
 # Adiciona o caminho do diretório pai ao PATH do sistema, permitindo importar módulos de outros diretórios
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-from config import device_ip_in, device_ip_out, username, password
+from config import unidade, username, password
 
 # Configura o logging para melhor monitoramento
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -28,7 +29,6 @@ def run_event_recorder(recorder, thread_name):
     except Exception as e:
         logging.exception(f"Erro na thread {thread_name}: {e}")  # Imprime qualquer erro ocorrido durante a execução
 
-
 def restart_thread(thread, recorder, thread_name):
     """
     Função para reiniciar uma única thread.
@@ -42,7 +42,6 @@ def restart_thread(thread, recorder, thread_name):
     new_thread.start()  # Inicia a nova thread
     return new_thread
 
-
 def run_flask():
     """
     Função para rodar o servidor Flask.
@@ -50,7 +49,6 @@ def run_flask():
     """
     logging.info("Iniciando servidor Flask...")
     app.run(host='0.0.0.0', debug=False, port=80)
-
 
 def run_movimento_service():
     """
@@ -69,6 +67,8 @@ def run_movimento_service():
         return None
 
 if __name__ == '__main__':
+        # Instancia o controlador
+    equipamento_controller = EquipamentoController()
     biometria_in_pedestre = None
     biometria_out_pedestre = None
     movimento_process = None  # Variável para armazenar o processo do MovimentoService
@@ -78,18 +78,31 @@ if __name__ == '__main__':
     flask_process.start()
     logging.info(f"Processo Flask iniciado com PID: {flask_process.pid}")
 
-    # Cria instâncias de EventRecorder para entrada e saída
-    recorder1 = EventRecorder(device_ip_in, username, password, 'IN')
-    recorder2 = EventRecorder(device_ip_out, username, password, 'OUT')
+    # Captura o ip das biometrias            
+    with app.app_context():
+        ips_entrada, ips_saida = equipamento_controller.get_equipamento_id(unidade)
+    # Itera sobre os IPs de entrada e saída
+    for ip_entrada in ips_entrada:
+        # print('##IP Entrada:', ip_entrada)
+        device_ip_in = ip_entrada
+        for ip_saida in ips_saida:
+            device_ip_out = ip_saida
+            # print('##IP Saída:', ip_saida)
 
-    # Inicia a detecção de movimento como um processo separado
-    movimento_process = run_movimento_service()
-    if movimento_process:
-        logging.info(f"MovimentoService iniciado com PID: {movimento_process.pid}")
+            # Cria instâncias de EventRecorder para entrada e saída
+            recorder1 = EventRecorder(device_ip_in, username, password, 'IN')
+            print('Recorder de Entrada: ',device_ip_in)
+            recorder2 = EventRecorder(device_ip_out, username, password, 'OUT')
+            print('Recorder de Saída: ',device_ip_out)
+            # Inicia a detecção de movimento como um processo separado
 
-    # Inicia as threads dos EventRecorders
-    biometria_in_pedestre = restart_thread(biometria_in_pedestre, recorder1, "Biometria_in_pedestre")
-    biometria_out_pedestre = restart_thread(biometria_out_pedestre, recorder2, "Biometria_out_pedestre")
+            movimento_process = run_movimento_service()
+            if movimento_process:
+                logging.info(f"MovimentoService iniciado com PID: {movimento_process.pid}")
+
+            # Inicia as threads dos EventRecorders
+            biometria_in_pedestre = restart_thread(biometria_in_pedestre, recorder1, "Biometria_in_pedestre")
+            biometria_out_pedestre = restart_thread(biometria_out_pedestre, recorder2, "Biometria_out_pedestre")
 
     while True:
         try:

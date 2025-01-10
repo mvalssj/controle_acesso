@@ -99,7 +99,7 @@ def logout():
 @app.before_request
 def verificar_login():
     # Lista de rotas que não precisam de autenticação
-    rotas_publicas = ['index', 'autenticar', 'static', 'logout', 'home', 'evento.novo_evento', 'programacao.buscar_programacao_por_cpf', 'programacao.api_cadastrar', 'evento.checa_placas']  # Inclua todas as rotas públicas
+    rotas_publicas = ['index', 'autenticar', 'static', 'logout', 'home', 'evento.novo_evento', 'programacao.buscar_programacao_por_cpf', 'programacao.api_cadastrar', 'evento.checa_placas', 'programacao.novo_programacao_veiculo']  # Inclua todas as rotas públicas
 
     print('Pagina requisitada: ',request.endpoint)
     # Verifica se o endpoint atual não é uma das rotas públicas e se o usuário não está autenticado

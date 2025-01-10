@@ -276,7 +276,7 @@
 
                     } else {
                         document.getElementById('direcao-truck').value = "SAINDO ...";
-                        document.getElementById('facial-balanca').value = "AGUARDANDO ...";
+                        document.getElementById('facial-balanca').value = data.pessoa;
                     }
                     
                 }
@@ -793,7 +793,8 @@
 
                 // Inicializa o DataTables com ordenação desabilitada
                 $(`#motoristasTable`).DataTable({
-                    "order": [] // Desabilita a ordenação inicial
+                    "order": [], // Desabilita a ordenação inicial
+                    "pageLength": 5 // Define o número de entradas por página
                 });
 
                 // Verifica se a fila está vazia

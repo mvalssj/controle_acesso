@@ -12,6 +12,8 @@ class UserAPI:
     def send_user(self, action, user_data):
         url = f"{self.base_url_in}?action={action}"
         response = requests.post(url, auth=self.auth, json=user_data)
+        # print(response.status_code)
+        # print(response.content)
         return response.status_code, response.content
 
 class Usuarios:

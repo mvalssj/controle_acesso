@@ -44,7 +44,7 @@ placa_7_caracteres = placa[:7] # Fatiamento para pegar os 7 primeiros caracteres
 print('7 Primeiros caracteres: ',placa_7_caracteres)
 
 # Verifica se a placa corresponde a algum padrão
-if placa_7_caracteres != "SP7": #Alteração: inclusão do novo padrão na verificação
+if placa_7_caracteres != "SP1": #Alteração: inclusão do novo padrão na verificação
 
 # if re.match(padrao_antigo, placa_7_caracteres) or re.match(padrao_novo, placa_7_caracteres) or re.match(padrao_sem_hifen, placa_7_caracteres): #Alteração: inclusão do novo padrão na verificação
     # Grava o texto extraído no arquivo especificado na variável file_placa

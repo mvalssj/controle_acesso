@@ -530,7 +530,7 @@ class ProgramacaoController:
                                 ]
                             }
 
-                            # print('####### DADOS DO CPF: ',card_data)
+                            print('####### DADOS DO CPF: ',card_data)
 
                             card_url = f"http://{device_ip_out}/cgi-bin/AccessCard.cgi?action=insertMulti"
                             print('######### URL ATUALIZAR CPF: ',card_url)

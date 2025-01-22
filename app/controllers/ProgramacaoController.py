@@ -13,7 +13,7 @@ import app
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 
-from config import unidade, device_ip_in, base_url_in, base_url_out, path_foto, username, password
+from config import unidade, path_foto, username, password
 
 class ProgramacaoController:
     def __init__(self):
@@ -63,7 +63,8 @@ class ProgramacaoController:
                         "valid_from": datahora_inicio.replace(' ', '') + ":00",  # remove espaços e adiciona segundos
                         "valid_to": datahora_fim.replace(' ', '') + ":00",  # remove espaços e adiciona segundos
                         "foto": foto,
-                        "cpf": cpf                   
+                        "cpf": cpf,
+                        "criar": 1                   
                     }
                     # api_data = json.dumps(api_data)
                     print("Enviando os seguintes dados para o equipamento: ", api_data)
@@ -243,6 +244,7 @@ class ProgramacaoController:
                         # Remove o prefixo "data:image/jpeg;base64," da variável foto, se existir
                         if foto and foto.startswith('data:image/jpeg;base64,'):
                             foto = foto[len('data:image/jpeg;base64,'):]
+                            # print(foto)
                             # Remove a foto atual para passar a nova
                             url_foto = f"http://{device_ip_in}/cgi-bin/AccessFace.cgi?action=removeMulti&UserIDList[0]={id_user}"
                             digest_auth = requests.auth.HTTPDigestAuth(username, password)
@@ -291,7 +293,7 @@ class ProgramacaoController:
                             "foto": foto,
                             "edit": 1
                         }
-
+                        
                         requests.post(url_for('programacao.api_cadastrar', _external=True), headers=headers, json=json_equipamento)
 
                         # Redireciona para a página de programações
@@ -356,28 +358,11 @@ class ProgramacaoController:
             # Captura o ip das biometrias
             ips_entrada, ips_saida = self.equipamento_controller.get_equipamento_id(unidade)
             
-            # Itera sobre os IPs de entrada e saída
-            # for ip_entrada in ips_entrada:
-            #     for ip_saida in ips_saida:
-            #         print('IP Entrada:', ip_entrada)
-            #         print('IP Saída:', ip_saida)
-            #         device_ip_in = ip_entrada
-            #         device_ip_out = ip_saida
-            # Captura o ip das biometrias
-            # direcao = data.get('direcao')
-            # print('#### Direção:', direcao)
-
-            # if direcao == 'IN':
-            #     device_ip = device_ip_in
-            # elif direcao == 'OUT':
-            #     device_ip = device_ip_out
-            # else:
-            #     return jsonify({'status': 'error', 'message': 'Direção inválida.'}), 400
-
             # Obtém o CPF enviado via JSON
             data = request.get_json()
             cpf = data.get('cpf')
             print("Entrou em Buscar Equipamento", cpf)
+            device_ip_in = '192.168.9.11'
 
             if not cpf:
                 return jsonify({'status': 'error', 'message': 'CPF não fornecido.'}), 400
@@ -425,9 +410,6 @@ class ProgramacaoController:
                     # Limpar a string base64 de caracteres de nova linha
                     clean_photo_base64 = photo_base64.replace("\r", "").replace("\n", "")
 
-                    # Exibir a string base64 limpa no terminal
-                    # print("String Base64 da Foto:", clean_photo_base64)
-
                     # Verificar se a string base64 é válida
                     try:
                         # Decodificar para verificar a validade
@@ -448,131 +430,104 @@ class ProgramacaoController:
                 return jsonify({'status': 'error', 'message': f'Requisição falhou: {str(e)}'}), 500
 
         @self.blueprint.route('/api/cadastrar', methods=['POST'])
-        # @token_required  # Protege a rota com o token JWT
-        @csrf.exempt  # Usa a instância csrf para desabilitar CSRF nessa rota
+        @csrf.exempt
         def api_cadastrar():
-            
+            if not request.is_json:
+                return jsonify(success=False, message='Requisição inválida.')
+                
             # Captura o ip das biometrias
             ips_entrada, ips_saida = self.equipamento_controller.get_equipamento_id(unidade)
+            data = request.get_json()
             
-            # Itera sobre os IPs de entrada e saída
-            for ip_entrada in ips_entrada:
-                for ip_saida in ips_saida:
-                    print('IP Entrada:', ip_entrada)
-                    print('IP Saída:', ip_saida)
-                    device_ip_in = ip_entrada
-                    device_ip_out = ip_saida
-            # Captura o ip das biometrias
+            # Define o IP e URL baseado na presença de device_ip_out
+            if data.get('device_ip_out'):
+                dispositivos = ips_saida
+            else:
+                dispositivos = ips_entrada
 
-                    print("Entrou na api_cadastrar: ")
-                    # print(f"Tipo de data recebido: {type(data)}")
-                    if request.is_json:
-                                                    
-                        data = request.get_json()
+            # Processa cada dispositivo uma única vez 
+            for device_ip in dispositivos:
+                print('IP do dispositivo:', device_ip)
+                current_device_ip = device_ip
+                current_base_url = f"http://{current_device_ip}/cgi-bin/AccessUser.cgi"
+
+                # Determina o ID do usuário
+                if data.get('criar'):
+                    url = f"http://{ips_entrada[0]}/cgi-bin/recordFinder.cgi?action=doSeekFind&name=AccessControlCard"
+                    request_usuarios = Usuarios(url, username, password)
+                    usuarios = request_usuarios.obter_usuarios()
+                    maior_userid = request_usuarios.obter_maior_userid(usuarios)
                     
-                        # Usa 'device_ip_out' se estiver presente nos dados, senão usa 'device_ip_in'
-                        current_device_ip = data.get('device_ip_out', device_ip_in)                     
+                    # Verifica se é a primeira iteração do loop
+                    if current_device_ip == dispositivos[0]:
+                        id_user = int(maior_userid["UserID"]) + 1 if maior_userid else 1
+                    else:
+                        id_user = int(maior_userid["UserID"]) if maior_userid else 1
+                else:    
+                    id_user = data['id_user']
 
-                        if data.get('device_ip_out'):
-                            current_base_url = data.get('base_url_out', base_url_out)
-                            id_user = data['id_user']
-                        else:
-                            current_base_url = base_url_in
+                # Dados do usuário
+                user_data = {
+                    "UserList": [{
+                        "UserID": str(id_user),
+                        "UserName": data['username'],
+                        "UserType": 0,
+                        "Authority": 2,
+                        "Password": data['password'],
+                        "Doors": [int(door) for door in data['doors']],
+                        "TimeSections": [int(time_section) for time_section in data['time_sections']],
+                        "ValidFrom": data['valid_from'].replace('T', ' '),
+                        "ValidTo": data['valid_to'].replace('T', ' ')
+                    }]
+                }
 
-                            if data.get('edit'):
-                                id_user = data['id_user']
-                            else:    
-                                # Obtém o maior UserID e incrementa 1
-                                url = f"http://{current_device_ip}/cgi-bin/recordFinder.cgi?action=doSeekFind&name=AccessControlCard"
+                # Criação da instância da API e envio dos dados do usuário
+                api = UserAPI(current_base_url, username, password)
+                status_code, response = api.send_user("insertMulti", user_data)  
+
+                # if status_code == 200:
+                if True:
+                    print('ENTROU PARA CADASTRAR CPF: ###########################',id_user)
+                    # Cadastra o CPF ou CardNo
+                    card_data = {
+                        "CardList": [{
+                            "UserID": str(id_user),
+                            "CardNo": data.get('cpf') or data.get('card_no'),
+                            "CardType": "0",
+                            "CardStatus": "0"
+                        }]
+                    }
+
+                    card_url = f"http://{current_device_ip}/cgi-bin/AccessCard.cgi?action=insertMulti"
+                    card_api = UserAPI(card_url, username, password)
+                    card_status_code, card_response_content = card_api.send_user("insertMulti", card_data)
+                    
+                    print(card_response_content);
+
+                    if card_status_code == 200:
+                        # Processa a foto da biometria
+                        foto_base64 = data.get('foto')
+                        if foto_base64:
+                            try:
+                                foto_bytes = base64.b64decode(foto_base64)
+                                imagem = Image.open(io.BytesIO(foto_bytes))
+                                image_path = os.path.join(path_foto, 'foto.jpg')
+                                imagem.save(image_path)
                                 
-                                request_usuarios = Usuarios(url, username, password)
-                                usuarios = request_usuarios.obter_usuarios()
-                                maior_userid = request_usuarios.obter_maior_userid(usuarios)
-                                novo_userid = int(maior_userid["UserID"]) + 1 if maior_userid else 1
+                                biometric_registration = BiometricRegistration(current_device_ip, username, password)
+                                biometric_registration.register_face(str(id_user), image_path)
+                                print(f'Usuário cadastrado com sucesso no dispositivo {current_device_ip}')
+                            except Exception as e:
+                                print(f"Erro ao processar biometria no dispositivo {current_device_ip}: {str(e)}")
+                                # return jsonify(success=False, message=f"Erro ao decodificar a biometria: {str(e)}")
+                    else:
+                        print(f'Erro ao cadastrar CPF/CardNo no dispositivo {current_device_ip}')
+                        # return jsonify(success=False, message=f'Erro ao cadastrar CPF/CardNo no dispositivo {current_device_ip}')
+                else:
+                    print(f'Erro ao cadastrar usuário no dispositivo {current_device_ip}')
+                    # return jsonify(success=False, message=f'Erro ao cadastrar usuário no dispositivo {current_device_ip}')
 
-                                id_user = novo_userid
-
-                        print('IP RECEBIDO: ', current_device_ip)
-                        print('URL RECEBIDA: ', current_base_url)
-
-                        # Dados do usuário
-                        user_data = {
-                            "UserList": [
-                                {
-                                    "UserID": str(id_user),  # Usa o novo UserID
-                                    "UserName": data['username'],
-                                    "UserType": 0,
-                                    "Authority": 2,
-                                    "Password": data['password'],
-                                    "Doors": [int(door) for door in data['doors']],  # Corrigido: converte cada elemento da lista para inteiro
-                                    "TimeSections": [int(time_section) for time_section in data['time_sections']],  # Corrigido: converte cada elemento da lista para inteiro
-                                    "ValidFrom": data['valid_from'].replace('T', ' '),  # Adiciona segundos 
-                                    "ValidTo": data['valid_to'].replace('T', ' ')  # Adiciona segundos 
-                                }
-                            ]
-                        }
-
-                        # Criação da instância da API e envio dos dados do usuário
-                        api = UserAPI(current_base_url, username, password)
-                        api.send_user("insertMulti", user_data)
-
-                        if True:
-                        # if status_code == 200:
-                            # Cadastra o CPF ou CardNo
-                            card_data = {
-                                "CardList": [
-                                    {
-                                        "UserID": str(id_user),
-                                        "CardNo": data.get('cpf') or data.get('card_no'),  # Usa o CPF ou CardNo do usuário
-                                        "CardType": "0",
-                                        "CardStatus": "0"
-                                    }
-                                ]
-                            }
-
-                            print('####### DADOS DO CPF: ',card_data)
-
-                            card_url = f"http://{device_ip_out}/cgi-bin/AccessCard.cgi?action=insertMulti"
-                            print('######### URL ATUALIZAR CPF: ',card_url)
-                            card_api = UserAPI(card_url, username, password)
-                            card_status_code, card_response_content = card_api.send_user("insertMulti", card_data)
-
-                            print("Status Card", card_status_code, card_response_content)
-
-                            # if True:
-                            if card_status_code == 200:
-                                # Recebe a foto da biometria em base64
-                                foto_base64 = data.get('foto')
-                                
-                                if foto_base64:
-                                    try:
-                                        # Decodifica a imagem em base64
-                                        foto_bytes = base64.b64decode(foto_base64)
-                                        # Cria um objeto Imagem a partir dos bytes
-                                        imagem = Image.open(io.BytesIO(foto_bytes))
-                                        # Salva a imagem em um arquivo temporário                                        
-                                        imagem.save(os.path.join(path_foto, 'foto.jpg'))
-                                        image_path = os.path.join(path_foto, 'foto.jpg')
-                                        biometric_registration = BiometricRegistration(current_device_ip, username, password)
-                                        biometric_registration.register_face(str(id_user), image_path)
-
-                                        # return jsonify(success=True, message='Usuário, CPF/CardNo e biometria cadastrados com sucesso!')
-                                        print('Usuário, CPF/CardNo e biometria cadastrados com sucesso!')
-                                    except Exception as e:
-                                        # return jsonify(success=False, message=f"Erro ao decodificar a biometria")
-                                        print("Erro ao decodificar a biometria")
-                                else:
-                                    # return jsonify(success=False, message='Foto da biometria não encontrada.')
-                                    print('Foto da biometria não encontrada.')
-                            else:
-                                # return jsonify(success=False, message='Erro ao cadastrar CPF/CardNo.')
-                                print('Erro ao cadastrar CPF/CardNo.')
-                        else:
-                            # return jsonify(success=False, message='Erro ao cadastrar usuário.')
-                            print('Erro ao cadastrar usuário.')
-
-                    # return jsonify(success=False, message='Requisição inválida.')
-                    print('Requisição inválida.')
+            return jsonify(success=True, message='Cadastro realizado com sucesso em todos os dispositivos!')
                 
         @self.blueprint.route('/cadastro/pessoa', methods=['POST'])
         @csrf.exempt

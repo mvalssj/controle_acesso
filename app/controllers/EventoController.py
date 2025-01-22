@@ -187,7 +187,6 @@ class EventoController:
                             datahora_fim = "2030-03-10T10:00:00"
                             datahora_inicio = "2024-03-10T10:00:00"
 
-
                     if (direcao == "IN" and cpf is not None and codigo_erro != "21" and codigo_erro != "16"):
                         
                         ## pega a foto do cadastro
@@ -287,7 +286,7 @@ class EventoController:
                                 "id_user": id_user,
                                 "device_ip_out": device_ip_out
                             }     
-                            # print('Json saida:',json_saida)           
+                            # print('########## Json saida: ',json_saida)           
 
                             response_saida = requests.post(url_for('programacao.api_cadastrar', _external=True), headers=headers, json=json_saida)
 
@@ -316,15 +315,11 @@ class EventoController:
                         # Valida se os campos necessários foram recebidos
                         if not id_equipamento or not imagem_path or not json_data:
                             print('Campos necessários não recebidos')
-                            # return jsonify({"error": "Missing required fields"}), 400
-
 
                         # Verifica se o campo CPF está vazio e se não está programado
                         if not cpf:
                             
                             print('Pessoa não identificada ou sem programação.')
-
-                            # return jsonify({"status": "error", "message": "Pessoa não identificada ou sem programação."}), 400
                     
                     try:
                     
@@ -365,7 +360,6 @@ class EventoController:
                                     db.session.commit() 
                                 except Exception as e:
                                     print(f"Erro ao inserir evento no banco!")
-                                    # return jsonify({"status": "Erro ao inserir evento!"})                       
 
                             # --- Início da integração com Siscomex ---
                             if novo_evento.id and codigo_erro != "20":  # Verifica se o evento foi inserido com sucesso
@@ -384,8 +378,6 @@ class EventoController:
                                 novo_evento.protocolo = protocolo
                                 db.session.commit()
                             # --- Fim da integração com Siscomex ---
-
-                            # print('Ativando Antipassback de saida...')   
 
                             json_data = {
                                 "UserList": [
@@ -417,10 +409,7 @@ class EventoController:
                                     return None, None
                                  
                             status_code, response_content = send_user(url, json_data, username, password)
-                            
-                            # print("Status Code:", status_code)
-                            # print("Response Content Saida:", response_content)
-                                            
+                                                                        
                             url = f"http://{device_ip_in}/cgi-bin/AccessUser.cgi?action=insertMulti"
                             
                             json_data = {
@@ -450,11 +439,6 @@ class EventoController:
                                     traceback.print_exc()  # Imprime a stack trace completa do erro
                                     return None, None
                                                 
-                            # print("Status Code:", status_code)
-                            # print("Response Content:", response_content)
-
-                            # Atualiza o campo 'gracacao_equipamento' para 'Y'
-
                             if codigo_erro == "20":
                                 direcao = None
                                 # Atualiza o campo 'gracacao_equipamento' para 'N'
@@ -522,15 +506,13 @@ class EventoController:
                         
                     if not data:
                         print("Invalid or missing JSON data")
-                        # return jsonify({"error": "Invalid or missing JSON data"}), 400
                     else:
                         # Pegar ID da pessoa no equipamento
                         url_equipamento = f"http://{current_device_ip}/cgi-bin/AccessCard.cgi?action=list&CardNoList[0]={cpf}"
 
                         digest_auth = requests.auth.HTTPDigestAuth(username, password)
                         rval = requests.get(url_equipamento, auth=digest_auth, stream=True, timeout=20, verify=False)
-                        # Pegar ID da pessoa no equipamento
-                        # Extrair o valor de UserID da resposta retornada              
+                        # Pegar ID da pessoa no equipamento          
                         try:
                             # Use regex para encontrar o UserID na resposta de texto
                             match = re.search(r'Cards\[0\]\.UserID=(\d+)', rval.text)
@@ -552,7 +534,6 @@ class EventoController:
                         rval = requests.get(url_foto, auth=digest_auth, stream=True, timeout=20, verify=False)
                         foto = rval.text
                         
-                        
                         # Extrair a string da resposta
                         response_text = foto
                         
@@ -571,7 +552,6 @@ class EventoController:
                         if cpf !="":
                             # Define o corpo da requisição com o CPF
                             data_cpf = {'cpf': cpf}
-
                             # Faz a requisição POST para a rota /programacoes/cpf
                             try:
                                 response_programacao = requests.post(
@@ -582,15 +562,11 @@ class EventoController:
                             except Exception as e:
                                 print(f"Erro ao fazer a requisição POST")
 
-                            # print("Programação Encontrada!", response_programacao.text)
-
                             # Converte a resposta para JSON
                             try:
                                 response_data = response_programacao.json()
                             except ValueError as e:
                                 print(f"Erro ao converter resposta para JSON")
-                                # Tratar o erro, talvez retornar um erro 500
-                                # return
 
                         # Extrai as datas do JSON
                         datahora_fim = response_data.get("programacao", {}).get("datahora_fim")
@@ -638,12 +614,9 @@ class EventoController:
                             # Atualize os atributos do evento
                             evento.direcao = "IN"
                             evento.retificacao = "Y"
-
                             # Salve as alterações no banco de dados
                             db.session.commit()
 
-                            # Retorne uma resposta de sucesso
-                            # return jsonify({"status": "success", "message": "Evento atualizado com sucesso"}), 200
                         else:
                             # Retorne uma resposta de erro se o evento não foi encontrado
                             print("Evento não encontrado")
@@ -674,8 +647,6 @@ class EventoController:
                             def send_user(url, json_data, username, password):
                                 # Realiza a requisição HTTP POST com autenticação digest
                                 response = requests.post(url, auth=requests.auth.HTTPDigestAuth(username, password), json=json_data)
-                                # Retorna o status code e o conteúdo da resposta
-                                # return response.status_code, response.content
                             
                             status_code, response_content = send_user(url, json_data, username, password)
                             
@@ -689,18 +660,6 @@ class EventoController:
 
                             # Verifique se o evento foi encontrado
                             if evento:
-
-                                # protocolo_origem = evento.protocolo
-                                # siscomex_in = {
-                                # "tipoOperacao":"E",
-                                # "protocoloEventoRetificadoOuExcluido": protocolo_origem
-                                # }
-
-                                # protocolo = enviar_siscomex(siscomex_in)
-                                # # Grava protocolo na tupla
-                                # evento.protocolo = protocolo
-                                # db.session.commit()
-
                                 # Atualize os atributos do evento
                                 evento.direcao = "OUT"
                                 evento.retificacao = "Y"
@@ -709,13 +668,11 @@ class EventoController:
                                 db.session.commit()
 
                                 # Retorne uma resposta de sucesso
-                                # return jsonify({"status": "success", "message": "Evento atualizado com sucesso"}), 200
                                 print("Evento atualizado com sucesso")
                             else:
                                 # Retorne uma resposta de erro se o evento não foi encontrado
                                 print("Esso ao atualizar evento")
-                                # return jsonify({"status": "error", "message": "Evento não encontrado"}), 404
-
+ 
         # Rota para atualizar um evento
         @self.blueprint.route('/eventos/<int:id>/editar', methods=['GET', 'POST'])
         def editar_evento(id):

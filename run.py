@@ -57,7 +57,7 @@ def run_movimento_service():
     """
     try:
         logging.info("Iniciando MovimentoService...")
-        process = subprocess.Popen(["python", "app\\services\\movimento\\MovimentoService.py"], shell=True)
+        process = subprocess.Popen(["%LOCALAPPDATA%//Programs//Python//Python310//python.exe", "C:\\controle_acesso\\app\\services\\movimento\\MovimentoService.py"], shell=True)
         return process
     except FileNotFoundError:
         logging.error("Erro: MovimentoService.py não encontrado.")
@@ -96,13 +96,13 @@ if __name__ == '__main__':
             print('Recorder de Saída: ',device_ip_out)
             # Inicia a detecção de movimento como um processo separado
 
-            movimento_process = run_movimento_service()
-            if movimento_process:
-                logging.info(f"MovimentoService iniciado com PID: {movimento_process.pid}")
-
             # Inicia as threads dos EventRecorders
             biometria_in_pedestre = restart_thread(biometria_in_pedestre, recorder1, "Biometria_in_pedestre")
             biometria_out_pedestre = restart_thread(biometria_out_pedestre, recorder2, "Biometria_out_pedestre")
+
+            movimento_process = run_movimento_service()
+            if movimento_process:
+                logging.info(f"MovimentoService iniciado com PID: {movimento_process.pid}")
 
     while True:
         try:

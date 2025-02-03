@@ -58,6 +58,7 @@ class Evento(BaseModel):
     id_evento = db.Column(db.BigInteger, nullable=False)
     pessoa = db.Column(db.String(150), nullable=True)
     cpf = db.Column(db.String(11), nullable=True)
+    pos_fila = db.Column(db.Integer, nullable=True)
     placa_1 = db.Column(db.String(7), nullable=True)
     placa_2 = db.Column(db.String(7), nullable=True)
     direcao = db.Column(db.String(3), nullable=True)

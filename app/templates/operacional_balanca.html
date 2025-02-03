@@ -20,12 +20,19 @@
             <!-- Adiciona o id "foto-img" -->
         </div>
 
-        <!-- Adicionar o div para a data/hora no canto direito -->
-        <div class="apple-form" id="datetime" style="position: absolute; top: 80px; right: 20px; font-size: 30px;">
+        <div class="apple-form" id="direcao" style="position: absolute; top: 80px; right: 20px; font-size: 12px;">
+            <select id="tipo" class="apple-input" style="text-align: center;" onchange="atualizarFilaBalanca()">
+                <option value="1">ENTRADA DE VEÍCULOS</option>
+                <option value="2">SAÍDA DE VEÍCULOS</option>
+                <!-- <option value="3">AMBAS DIREÇÕES</option> -->
+            </select>
         </div>
+        <!-- Adicionar o div para a data/hora no canto direito -->
+        <!-- <div class="apple-form" id="datetime" style="position: absolute; top: 60px; right: 20px; font-size: 30px;">
+        </div> -->
 
         <div class="apple-form" id="placa_detectada"
-            style="position: absolute; top: 200px; right: 20px; font-size: 16px;">
+            style="position: absolute; top: 235px; right: 20px; font-size: 16px;">
 
             <img id="placa_frontal-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
                 style="width: 100%; border-radius: 10px; display: block; margin: 0 auto;">
@@ -255,30 +262,80 @@
         element.style.zIndex = 'auto';
     }
 
+    function atualizarFilaBalanca() {
+        var direcao = document.getElementById('tipo').value;
+        fetch(`/fila_balanca?direcao=${direcao}`)
+            .then(response => response.json())
+            .then(data => {
+                // Atualizar a interface com os dados recebidos
+                console.log(data);
+            })
+            .catch(error => console.error('Erro ao atualizar a fila:', error));
+    }
+
+    function verificarDirecao() {
+        var direcaoSelecionada = document.getElementById('tipo').value;
+
+        fetch(`/verificar_direcao?direcao=${direcaoSelecionada}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Data Disponivel: ', data.disponivel); // Adiciona log para depuração
+                // Verifica se a propriedade 'disponivel' está correta
+                var select = document.getElementById('tipo');
+                if (data && !data.disponivel) {
+                    alert('A direção selecionada já está em uso por outra pessoa.');
+                    document.getElementById('tipo').value = ""; // Reseta a seleção
+                } else {
+                    // Muda a posição das opções no select com base no valor de 'disponivel'
+                    if (data.disponivel === 2) {
+                        select.innerHTML = `
+                            <option value="2">SAÍDA DE VEÍCULOS</option>
+                            <option value="1">ENTRADA DE VEÍCULOS</option>
+                        `;
+                    } else if (data.disponivel === 1) {
+                        select.innerHTML = `
+                            <option value="1">ENTRADA DE VEÍCULOS</option>
+                            <option value="2">SAÍDA DE VEÍCULOS</option>
+                        `;
+                    }
+                }
+            })
+            .catch(error => console.error('Erro ao verificar a direção:', error));
+    }
+
+    // Chama a função verificarDirecao ao carregar a página
+    // setInterval(verificarDirecao, 5000); // Chama verificarDirecao a cada 5 segundos
+    // verificarDirecao();
+    
     // Função para atualizar o campo CPF com o último CPF inserido
     function updateCPF() {
+        var direcaoSelecionada = document.getElementById('tipo').value; // Obtém a direção selecionada
 
-        fetch('/fila_balanca')
+        fetch(`/fila_balanca?direcao=${direcaoSelecionada}`)
             .then(response => response.json())
             .then(data => {
                 if (!data) {
                     console.error("Dados inválidos recebidos de /fila_balanca");
-                    // document.getElementById('foto-img').src = '';
                     document.getElementById('placa_frontal-img').src = '';
                     document.getElementById('cpf').value = '';
                     document.getElementById('alert-danger-json').innerText = 'Erro ao obter dados.';
                     return;
-                }else{
-
-                    if (data.direcao == "IN") {
+                } else {
+                    // Verifica a direção selecionada e atualiza os campos correspondentes
+                    if (direcaoSelecionada === "1" && data.direcao == "IN") {
                         document.getElementById('direcao-truck').value = "ENTRANDO ...";                    
                         document.getElementById('facial-balanca').value = data.pessoa;
-
-                    } else {
+                    } else if (direcaoSelecionada === "2" && data.direcao == "OUT") {
                         document.getElementById('direcao-truck').value = "SAINDO ...";
                         document.getElementById('facial-balanca').value = data.pessoa;
+                    } else if (direcaoSelecionada === "3") {
+                        // Ambas as direções
+                        document.getElementById('direcao-truck').value = data.direcao == "IN" ? "ENTRANDO ..." : "SAINDO ...";
+                        document.getElementById('facial-balanca').value = data.pessoa;
+                    } else {
+                        // Se não corresponder a direção selecionada, não atualiza os campos
+                        return;
                     }
-                    
                 }
 
                 document.getElementById('cpf').value = data.cpf || '';
@@ -286,14 +343,13 @@
                 buscarProgramacao(data.cpf);
                 console.log('######## Data ##########', data);
 
-                //fotos das placas
+                // Fotos das placas
                 document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
                 document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
                 document.getElementById('container_superior-img').src = 'data:image/jpeg;base64,' + data.container_superior;
                 document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
-                //fotos das placas
 
-                if (true) {
+                if (data.imagem_base64) {
                     console.log('########## Entrou aqui!!!!!: ')
                     document.getElementById('foto-img').src = 'data:image/jpeg;base64,' + data.imagem_base64;
                     document.getElementById('foto').style.display = 'block';
@@ -301,7 +357,6 @@
                     if (document.getElementById('cavalo').value != '') {
                         document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
 
-                        // document.querySelector('label[for="placa"]').style.display = 'block';
                         document.getElementById('placa').style.display = 'block';
                         document.getElementById('placa_detectada_botao').style.display = 'block';
                         document.getElementById('new_foto_placa_frontal').style.display = 'block';
@@ -309,7 +364,6 @@
 
                     } else {
                         document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.pedestre;
-                        // document.querySelector('label[for="placa"]').style.display = 'none';
                         document.getElementById('placa').style.display = 'none';
                         document.getElementById('placa_detectada_botao').style.display = 'none';
                         document.getElementById('new_foto_placa_frontal').style.display = 'none';
@@ -327,14 +381,11 @@
                     document.getElementById('placa_frontal_balanca-img').src = 'static\\images\\sem_foto.jpg';
                     document.getElementById('placa_traseira_balanca-img').src = 'static\\images\\sem_foto.jpg';
                     document.getElementById('placa_detectada_botao').style.display = 'none';
-                    // document.getElementById('alert-success').style.display = 'none';
-                    // document.getElementById('alert-danger').style.display = 'none';
                     document.getElementById('placa').style.display = 'none';
 
                     document.getElementById('aprovacao_manual_placa').style.display = 'none';
                     document.getElementById('new_foto_placa_frontal').style.display = 'none';
 
-                    // document.getElementById('foto').style.display = 'none';
                     console.warn("Nenhuma imagem em base64 encontrada.");
                 }
 
@@ -346,12 +397,11 @@
             })
             .catch(error => {
                 console.error('Erro ao atualizar CPF:', error);
-                // document.getElementById('foto-img').src = '';
                 document.getElementById('cpf').value = '';
                 document.getElementById('alert-danger-json').innerText = 'Erro na conexão. Verifique sua internet.';
             });
     }
-
+    
     // Chama a função updateCPF a cada 5 segundos
     setInterval(updateCPF, 1000);
 
@@ -410,20 +460,20 @@
     });
 
     // Função para atualizar a data e hora no canto direito
-    function updateDateTime() {
-        var now = new Date();
-        var formattedDateTime = now.toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
-        });
-        document.getElementById('datetime').innerText = formattedDateTime;
-    }
+    // function updateDateTime() {
+    //     var now = new Date();
+    //     var formattedDateTime = now.toLocaleString('pt-BR', {
+    //         day: '2-digit', month: '2-digit', year: 'numeric',
+    //         hour: '2-digit', minute: '2-digit', second: '2-digit'
+    //     });
+    //     document.getElementById('datetime').innerText = formattedDateTime;
+    // }
 
-    // Atualiza a data e hora a cada segundo
-    setInterval(updateDateTime, 1000);
+    // // Atualiza a data e hora a cada segundo
+    // setInterval(updateDateTime, 1000);
 
-    // Chama a função imediatamente ao carregar a página
-    updateDateTime();
+    // // Chama a função imediatamente ao carregar a página
+    // updateDateTime();
 
     // Adiciona um listener de evento para o campo placa
     document.getElementById('placa').addEventListener('input', function () {
@@ -761,7 +811,11 @@
     }
 
     function atualizarFilaMotoristas() {
-        fetch('/fila_motoristas_pesar')
+
+        var direcaoSelecionada = document.getElementById('tipo').value; // Obtém a direção selecionada
+
+        fetch(`/fila_motoristas_pesar?direcao=${direcaoSelecionada}`)
+
             .then(response => response.json())
             .then(data => {
                 // Cria a tabela com classes Bootstrap

@@ -267,11 +267,11 @@ class EventoController:
                                     "catraca": catraca
                                 }
 
-                                protocolo = enviar_siscomex(siscomex_in)
-                                print("Protocolo: ",protocolo)
-                                # Grava protocolo na tupla
-                                novo_evento.protocolo = protocolo
-                                db.session.commit()
+                                # protocolo = enviar_siscomex(siscomex_in)
+                                # print("Protocolo: ",protocolo)
+                                # # Grava protocolo na tupla
+                                # novo_evento.protocolo = protocolo
+                                # db.session.commit()
                             # --- Fim da integração com Siscomex ---
 
                             json_saida = {
@@ -373,10 +373,10 @@ class EventoController:
                                     "catraca": catraca
                                 }
 
-                                protocolo = enviar_siscomex(siscomex_out)
-                                # Grava protocolo na tupla
-                                novo_evento.protocolo = protocolo
-                                db.session.commit()
+                                # protocolo = enviar_siscomex(siscomex_out)
+                                # # Grava protocolo na tupla
+                                # novo_evento.protocolo = protocolo
+                                # db.session.commit()
                             # --- Fim da integração com Siscomex ---
 
                             json_data = {
@@ -719,6 +719,10 @@ class EventoController:
             # Captura o ip das biometrias
             ips_entrada, ips_saida = self.equipamento_controller.get_equipamento_id(unidade)
             
+            direcao = request.args.get('direcao')  # Obtém a direção da requisição
+            verificar_direcao(direcao)
+            
+            print('DIRECAO: ##########',direcao)
             # Carrega as imagens base64
             with open("app\\services\\lpr\\images\\live.jpg", "rb") as image_file:
                 placa_frontal_entrada_base64 = base64.b64encode(image_file.read()).decode('utf-8')
@@ -755,28 +759,27 @@ class EventoController:
                         )
 
                         # Consulta principal para encontrar eventos de entrada e saída com pesar='Y' sem evento de saída posterior
-                        eventos_pesar_in = (
-                            Evento.query
-                            .outerjoin(subquery_last_out, Evento.cpf == subquery_last_out.c.cpf)
-                            .filter(
-                                Evento.direcao == 'IN',
-                                Evento.pesar == 'Y',
-                                (subquery_last_out.c.last_out_id == None) | (Evento.id > subquery_last_out.c.last_out_id)
+                        if direcao == "1":  # Direção IN
+                            eventos = (
+                                Evento.query
+                                .filter(Evento.direcao == 'IN', Evento.pesar == 'Y')
+                                .all()
                             )
-                            .all()
-                        )
-
-                        eventos_pesar_out = (
-                            Evento.query
-                            .filter(
-                                Evento.direcao == 'OUT',
-                                Evento.pesar == 'Y'
+                        elif direcao == "2":  # Direção OUT
+                            eventos = (
+                                Evento.query
+                                .filter(Evento.direcao == 'OUT', Evento.pesar == 'Y')
+                                .all()
                             )
-                            .all()
-                        )
+                        else:  # Ambas as direções
+                            eventos = (
+                                Evento.query
+                                .filter(Evento.pesar == 'Y')
+                                .all()
+                            )
 
                         # Combina as listas, com os eventos 'OUT' no início
-                        eventos_pesar = eventos_pesar_out + eventos_pesar_in
+                        eventos_pesar = eventos
 
                         # Define ultimo_evento como o primeiro da lista eventos_pesar
                         ultimo_evento = eventos_pesar[0] if eventos_pesar else None
@@ -954,6 +957,9 @@ class EventoController:
         # Rota para obter a fila de motoristas que ainda não pesaram
         @self.blueprint.route('/fila_motoristas_pesar')
         def fila_motoristas_pesar():
+            
+            direcao = request.args.get('direcao')  # Obtém a direção da requisição
+
             # Subquery para encontrar o último evento de saída para cada CPF
             subquery_last_out = (
                 Evento.query
@@ -964,28 +970,27 @@ class EventoController:
             )
 
             # Consulta principal para encontrar eventos de entrada e saída com pesar='Y' sem evento de saída posterior
-            eventos_pesar_in = (
-                Evento.query
-                .outerjoin(subquery_last_out, Evento.cpf == subquery_last_out.c.cpf)
-                .filter(
-                    Evento.direcao == 'IN',
-                    Evento.pesar == 'Y',
-                    (subquery_last_out.c.last_out_id == None) | (Evento.id > subquery_last_out.c.last_out_id)
+            if direcao == "1":  # Direção IN
+                eventos = (
+                    Evento.query
+                    .filter(Evento.direcao == 'IN', Evento.pesar == 'Y')
+                    .all()
                 )
-                .all()
-            )
-
-            eventos_pesar_out = (
-                Evento.query
-                .filter(
-                    Evento.direcao == 'OUT',
-                    Evento.pesar == 'Y'
+            elif direcao == "2":  # Direção OUT
+                eventos = (
+                    Evento.query
+                    .filter(Evento.direcao == 'OUT', Evento.pesar == 'Y')
+                    .all()
                 )
-                .all()
-            )
+            else:  # Ambas as direções
+                eventos = (
+                    Evento.query
+                    .filter(Evento.pesar == 'Y')
+                    .all()
+                )
 
             # Combina as listas, com os eventos 'OUT' no início
-            eventos_pesar = eventos_pesar_out + eventos_pesar_in
+            eventos_pesar = eventos
 
             # Formata os dados para a resposta JSON
             eventos_pesar_data = [
@@ -1280,3 +1285,19 @@ class EventoController:
             except Exception as e:
                 print(f"Erro ao obter as placas: {e}")
                 return jsonify({"error": "Erro ao obter as placas."}), 500
+
+        @self.blueprint.route('/verificar_direcao', methods=['GET'])
+        def verificar_direcao(direcao = 0):
+            direcao = request.args.get('direcao')   
+            print('DIREÇÃO DISPONIVEL: ',direcao)         
+            # Verifica se a direção está em uso
+            if direcao == "1":  # Direção "ENTRADA DE VEÍCULOS"
+                evento_ativo = Evento.query.filter(Evento.direcao == "OUT").first()
+                if evento_ativo:
+                    return jsonify({'disponivel': 2})  # Direção em uso
+            elif direcao == "2":  # Direção "SAÍDA DE VEÍCULOS"
+                evento_ativo = Evento.query.filter(Evento.direcao == "IN").first()
+                if evento_ativo:
+                    return jsonify({'disponivel': 1})  # Direção em uso
+
+            return jsonify({'disponivel': True})  # Direção disponível

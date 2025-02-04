@@ -6,7 +6,7 @@ import sys
 import threading
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-from config import device_ip_in, device_ip_out, device_ip_in_truck, device_ip_out_truck, device_ip_out_car, device_ip_in_car, username, password
+# from config import device_ip_in, device_ip_out, device_ip_in_truck, device_ip_out_truck, device_ip_out_car, device_ip_in_car, username, password
 
 class EventRecorder:
     def __init__(self, device_ip_in, username, password, direction):

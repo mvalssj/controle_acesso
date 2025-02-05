@@ -7,7 +7,7 @@ import base64 # Adicione esta linha
 from PIL import Image
 import io
 import sys
-import os
+import os, re
 import requests
 import app
 
@@ -334,18 +334,32 @@ class ProgramacaoController:
 
             # Se encontrar programações dentro do intervalo, retorna a primeira encontrada
             if programacoes_validas:
-                programacao = programacoes_validas[0]  # Aqui você pode ajustar para retornar mais de uma, se necessário
+                programacao = programacoes_validas  # Armazena todas as programações válidas
+                programacao_unica = programacao[0] if programacao else None  # Mantém a primeira programação, se existir
                 return jsonify({
                     'status': 'success',
                     'programacao': {
-                        'pessoa': programacao.pessoa,
-                        'cpf': programacao.cpf,
-                        'cavalo': programacao.cavalo,
-                        'carreta': programacao.carreta,
-                        'datahora_inicio': programacao.datahora_inicio.strftime('%Y-%m-%dT%H:%M'),
-                        'datahora_fim': programacao.datahora_fim.strftime('%Y-%m-%dT%H:%M')
-                    }
+                        'id': programacao_unica.id if programacao_unica else None,
+                        'pessoa': programacao_unica.pessoa if programacao_unica else None,
+                        'cpf': programacao_unica.cpf if programacao_unica else None,
+                        'cavalo': programacao_unica.cavalo if programacao_unica else None,
+                        'carreta': programacao_unica.carreta if programacao_unica else None,
+                        'datahora_inicio': programacao_unica.datahora_inicio.strftime('%Y-%m-%dT%H:%M') if programacao_unica else None,
+                        'datahora_fim': programacao_unica.datahora_fim.strftime('%Y-%m-%dT%H:%M') if programacao_unica else None,
+                    },
+                    'programacoes_validas': [
+                        {
+                            'id': prog.id,
+                            'pessoa': prog.pessoa,
+                            'cpf': prog.cpf,
+                            'cavalo': prog.cavalo,
+                            'carreta': prog.carreta,
+                            'datahora_inicio': prog.datahora_inicio.strftime('%Y-%m-%dT%H:%M'),
+                            'datahora_fim': prog.datahora_fim.strftime('%Y-%m-%dT%H:%M'),
+                        } for prog in programacao  # Itera sobre todas as programações válidas
+                    ]
                 })
+            
             # Se não encontrar nenhuma programação válida, retorna uma mensagem de erro
             else:
                 return jsonify({'status': 'error', 'message': 'Nenhuma programação ativa no intervalo de tempo atual.'}), 404
@@ -463,6 +477,23 @@ class ProgramacaoController:
                         id_user = int(maior_userid["UserID"]) + 1 if maior_userid else 1
                     else:
                         id_user = int(maior_userid["UserID"]) if maior_userid else 1
+                    
+                    # verifica se o já está na controladora
+                    cpf = data.get('cpf') or data.get('card_no') 
+                    url = f"http://{ips_entrada[0]}/cgi-bin/AccessCard.cgi?action=list&CardNoList[0]={cpf}"
+                    digest_auth = requests.auth.HTTPDigestAuth(username, password)
+                    rval = requests.get(url, auth=digest_auth, stream=True, timeout=20, verify=False)
+                    # print('############# Cadastro cpf:',rval.text)
+                    user_id = None
+                    match = re.search(r'UserID=(\d+)', rval.text)
+                    if match:
+                        user_id = match.group(1)
+
+                    print('UserID:', user_id)
+                    if user_id != None:
+                        id_user = user_id
+                    # verifica se o já está na controladora
+
                 else:    
                     id_user = data['id_user']
 

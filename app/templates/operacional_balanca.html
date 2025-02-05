@@ -22,6 +22,7 @@
 
         <div class="apple-form" id="direcao" style="position: absolute; top: 80px; right: 20px; font-size: 12px;">
             <select id="tipo" class="apple-input" style="text-align: center;" onchange="atualizarFilaBalanca()">
+                <option value="0" selected>SELECIONE UMA DIREÇÃO: </option>
                 <option value="1">ENTRADA DE VEÍCULOS</option>
                 <option value="2">SAÍDA DE VEÍCULOS</option>
                 <!-- <option value="3">AMBAS DIREÇÕES</option> -->
@@ -32,7 +33,7 @@
         </div> -->
 
         <div class="apple-form" id="placa_detectada"
-            style="position: absolute; top: 235px; right: 20px; font-size: 16px;">
+            style="position: absolute; top: 225px; right: 20px; font-size: 16px;">
 
             <img id="placa_frontal-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
                 style="width: 100%; border-radius: 10px; display: block; margin: 0 auto;">
@@ -40,14 +41,14 @@
                 <!-- <label for="placa" class="mr-2">Placa detectada: </label> -->
             </div>
             <div class="m-3 d-flex align-items-center" id="placa_ocr">
-                <input type="text" class="apple-input flex-grow-1" id="placa" value="" readonly>
+                <input type="text" class="apple-input flex-grow-1" id="placa" style="display: none;" value="" readonly>
                 <!-- Botão para nova foto -->
-                <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa" alt="Aprovar Manualmente"
+                <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa" style="display: none;" alt="Aprovar Manualmente"
                     onclick="aprovarPlacaManualmente()">
                     <i class="fas fa-edit"></i> <!-- Ícone de edição -->
                 </button>
                 <!-- Botão para nova foto com ícone de carregamento -->
-                <button type="button" id="new_foto_placa_frontal" class="btn btn-primary ml-2"
+                <button type="button" id="new_foto_placa_frontal" style="display: none;" class="btn btn-primary ml-2"
                     onclick="novaFotoPlacaFrontal()" alt="Tirar nova foto">
                     <i class="fas fa-camera" id="camera-icon"></i>
                     <span id="loading-icon" style="display:none;" class="spinner-border spinner-border-sm" role="status"
@@ -57,7 +58,7 @@
         </div>
 
         <div class="apple-form text-center" id="placa_detectada_botao"
-            style="position: absolute; top: 515px; right: 20px; font-size: 16px;">
+            style="position: absolute; top: 515px; right: 20px; font-size: 16px; display: none;">
             <!-- Botões agrupados para melhor semântica e centralizados com text-center -->
             <div class="btn-group">
                 <button type="button" class="btn btn-primary btn-lg" data-toggle="modal"
@@ -136,12 +137,13 @@
                                     <div class="m-3">
                                         <label for="placa-1">Placa: </label>
                                         <div class="d-flex align-items-center">
-                                        <input type="text" class="apple-input" id="placa_frontal_balanca" value=""
-                                            readonly>
-                                            <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa_frontal"
-                                            alt="Aprovar Manualmente" onclick="aprovarPlacaFrontalManualmenteBalanca()">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                            <input type="text" class="apple-input" id="placa_frontal_balanca" value=""
+                                                readonly>
+                                            <button type="button" class="btn btn-danger ml-2"
+                                                id="aprovacao_manual_placa_frontal" alt="Aprovar Manualmente"
+                                                onclick="aprovarPlacaFrontalManualmenteBalanca()">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -151,17 +153,55 @@
                                     <img id="container_superior-img"
                                         src="{{ url_for('static', filename='images/load.gif') }}" alt=""
                                         style="width: 70%; border-radius: 10px; display: block; margin: 0 auto;" hidden>
-                                        <div>
-                                            <div class="d-flex flex-column mr-2">
-                                                <label for="direcao-truck">Direção:</label>
-                                                <input type="text" class="apple-input" id="direcao-truck" value="" readonly>
+                                    <div>
+                                        <div class="d-flex flex-column mr-2">
+                                            <label for="direcao-truck">Direção:</label>
+                                            <input type="text" class="apple-input" id="direcao-truck" value="" readonly>
+                                        </div>
+                                        <div class="d-flex flex-column">
+                                            <label for="facial-balanca">Motorista:</label>
+                                            <div class="d-flex align-items-center">
+                                                <input type="text" class="apple-input" id="facial-balanca"
+                                                    value="Aguardando..." readonly>
+                                                <!-- Botão para abrir o modal do motorista -->
+                                                <button type="button" class="btn btn-info ml-2" id="modal_motorista_btn"
+                                                    alt="Abrir Modal Motorista" onclick="abrirModalMotorista()">
+                                                    <i class="fas fa-info-circle"></i> <!-- Ícone de informação -->
+                                                </button>
                                             </div>
-                                            <div class="d-flex flex-column">
-                                                <label for="facial-balanca">Motorista:</label>
-                                                <input type="text" class="apple-input" id="facial-balanca" value="Aguardando..." readonly>
+                                            <div id="programacao-selecionada" style="color: green; margin-top: 10px;">
+                                                Programação selecionada: <span id="programacao-id"></span>
                                             </div>
                                         </div>
-                                        
+                                    </div>
+
+                                    <!-- Modal Motorista -->
+                                    <div class="modal fade" id="motoristaModal" tabindex="-1" role="dialog"
+                                        aria-labelledby="motoristaModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="motoristaModalLabel">Programações do
+                                                        Motorista</h5>
+                                                    <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                <span aria-hidden="true">&times;</span>
+                                                            </button> -->
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div id="programacoes-motorista">
+                                                        <!-- Conteúdo da fila será carregado aqui -->
+                                                    </div>
+                                                    <div id="programacao-selecionada" style="color: green; margin-top: 10px;">
+                                                        Programação selecionada: <span id="programacao-id-in"></span>
+                                                    </div>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button> -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -173,12 +213,13 @@
                                     <div class="m-3">
                                         <label for="placa-3">Placa: </label>
                                         <div class="d-flex align-items-center">
-                                        <input type="text" class="apple-input" id="placa_traseira_balanca" value=""
-                                            readonly>
-                                            <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa_traseira"
-                                            alt="Aprovar Manualmente" onclick="aprovarPlacaTraseiraManualmenteBalanca()">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                            <input type="text" class="apple-input" id="placa_traseira_balanca" value=""
+                                                readonly>
+                                            <button type="button" class="btn btn-danger ml-2"
+                                                id="aprovacao_manual_placa_traseira" alt="Aprovar Manualmente"
+                                                onclick="aprovarPlacaTraseiraManualmenteBalanca()">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -247,6 +288,54 @@
 
 <script>
 
+       // Adiciona um listener de evento para o campo CPF
+    document.getElementById('cpf').addEventListener('input', function () {
+        var cpf = this.value;
+
+        // Verifica se o CPF tem 11 dígitos
+        if (cpf.length === 11) {
+            // Chama a função para buscar os dados da programação
+            buscarProgramacao(cpf);
+        }
+    });
+
+
+    // Adiciona um listener de evento para o campo placa
+    document.getElementById('placa').addEventListener('input', function () {
+        var placa = this.value;
+        var cavalo = document.getElementById('cavalo').value;
+        // var status = document.getElementById('status');
+
+        if (placa === cavalo) {
+            document.getElementById('placa').style.borderColor = 'green'; // Adiciona contorno verde
+            document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+            document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+        } else {
+            document.getElementById('placa').style.borderColor = 'red'; // Adiciona contorno vermelho
+            document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+            document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+        }
+    });
+
+    // Verifica o status da placa ao carregar a página
+    var placa = document.getElementById('placa').value;
+    var cavalo = document.getElementById('cavalo').value;
+    // var status = document.getElementById('status');
+
+    if (placa == cavalo) {
+        document.getElementById('placa').style.borderColor = 'green'; // Adiciona contorno verde
+        document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+        document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+    } else {
+        document.getElementById('placa').style.borderColor = 'red'; // Adiciona contorno verde
+        document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
+        document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
+    }
+
+    function abrirModalMotorista() {
+        $('#motoristaModal').modal('show'); // Abre o modal do motorista
+    }
+
     function zoomIn(element) {
         element.style.transform = 'scale(3)';
         element.style.transition = 'transform 0.3s ease';
@@ -263,6 +352,7 @@
     }
 
     function atualizarFilaBalanca() {
+        updateCPF();
         var direcao = document.getElementById('tipo').value;
         fetch(`/fila_balanca?direcao=${direcao}`)
             .then(response => response.json())
@@ -271,6 +361,7 @@
                 console.log(data);
             })
             .catch(error => console.error('Erro ao atualizar a fila:', error));
+            updateCPF();
     }
 
     function verificarDirecao() {
@@ -302,15 +393,9 @@
             })
             .catch(error => console.error('Erro ao verificar a direção:', error));
     }
-
-    // Chama a função verificarDirecao ao carregar a página
-    // setInterval(verificarDirecao, 5000); // Chama verificarDirecao a cada 5 segundos
-    // verificarDirecao();
-    
     // Função para atualizar o campo CPF com o último CPF inserido
     function updateCPF() {
         var direcaoSelecionada = document.getElementById('tipo').value; // Obtém a direção selecionada
-
         fetch(`/fila_balanca?direcao=${direcaoSelecionada}`)
             .then(response => response.json())
             .then(data => {
@@ -323,7 +408,7 @@
                 } else {
                     // Verifica a direção selecionada e atualiza os campos correspondentes
                     if (direcaoSelecionada === "1" && data.direcao == "IN") {
-                        document.getElementById('direcao-truck').value = "ENTRANDO ...";                    
+                        document.getElementById('direcao-truck').value = "ENTRANDO ...";
                         document.getElementById('facial-balanca').value = data.pessoa;
                     } else if (direcaoSelecionada === "2" && data.direcao == "OUT") {
                         document.getElementById('direcao-truck').value = "SAINDO ...";
@@ -341,6 +426,7 @@
                 document.getElementById('cpf').value = data.cpf || '';
 
                 buscarProgramacao(data.cpf);
+                atualizarProgramacoesMotorista(data.cpf);
                 console.log('######## Data ##########', data);
 
                 // Fotos das placas
@@ -363,11 +449,12 @@
                         document.getElementById('aprovacao_manual_placa').style.display = 'block';
 
                     } else {
-                        document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.pedestre;
+                        document.getElementById('placa_frontal-img').src = 'http://127.0.0.1/static/images/load.gif';
                         document.getElementById('placa').style.display = 'none';
                         document.getElementById('placa_detectada_botao').style.display = 'none';
                         document.getElementById('new_foto_placa_frontal').style.display = 'none';
                         document.getElementById('aprovacao_manual_placa').style.display = 'none';
+
                     }
                     document.getElementById('alert-success').style.display = 'block';
                     document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
@@ -401,13 +488,6 @@
                 document.getElementById('alert-danger-json').innerText = 'Erro na conexão. Verifique sua internet.';
             });
     }
-    
-    // Chama a função updateCPF a cada 5 segundos
-    setInterval(updateCPF, 1000);
-
-    // Chama a função imediatamente ao carregar a página
-    updateCPF();
-
     // Função para buscar os dados da programação
     function buscarProgramacao(cpf) {
         // Envia a requisição AJAX para buscar os dados da programação
@@ -447,67 +527,7 @@
                 console.error('Erro:', error);
             });
     }
-
-    // Adiciona um listener de evento para o campo CPF
-    document.getElementById('cpf').addEventListener('input', function () {
-        var cpf = this.value;
-
-        // Verifica se o CPF tem 11 dígitos
-        if (cpf.length === 11) {
-            // Chama a função para buscar os dados da programação
-            buscarProgramacao(cpf);
-        }
-    });
-
-    // Função para atualizar a data e hora no canto direito
-    // function updateDateTime() {
-    //     var now = new Date();
-    //     var formattedDateTime = now.toLocaleString('pt-BR', {
-    //         day: '2-digit', month: '2-digit', year: 'numeric',
-    //         hour: '2-digit', minute: '2-digit', second: '2-digit'
-    //     });
-    //     document.getElementById('datetime').innerText = formattedDateTime;
-    // }
-
-    // // Atualiza a data e hora a cada segundo
-    // setInterval(updateDateTime, 1000);
-
-    // // Chama a função imediatamente ao carregar a página
-    // updateDateTime();
-
-    // Adiciona um listener de evento para o campo placa
-    document.getElementById('placa').addEventListener('input', function () {
-        var placa = this.value;
-        var cavalo = document.getElementById('cavalo').value;
-        // var status = document.getElementById('status');
-
-        if (placa === cavalo) {
-            document.getElementById('placa').style.borderColor = 'green'; // Adiciona contorno verde
-            document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
-            document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
-        } else {
-            document.getElementById('placa').style.borderColor = 'red'; // Adiciona contorno vermelho
-            document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
-            document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
-        }
-    });
-
-    // Verifica o status da placa ao carregar a página
-    var placa = document.getElementById('placa').value;
-    var cavalo = document.getElementById('cavalo').value;
-    // var status = document.getElementById('status');
-
-    if (placa == cavalo) {
-        document.getElementById('placa').style.borderColor = 'green'; // Adiciona contorno verde
-        document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
-        document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
-    } else {
-        document.getElementById('placa').style.borderColor = 'red'; // Adiciona contorno verde
-        document.getElementById('placa').style.borderWidth = '5px'; // Define a largura da borda como 5px
-        document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
-    }
-
-    // Função para atualizar o campo placa com o conteúdo do arquivo placa.txt
+     // Função para atualizar o campo placa com o conteúdo do arquivo placa.txt
     function updatePlaca() {
         fetch('/placa_frontal') // Use '/placa.txt' para acessar o arquivo
             .then(response => response.text())
@@ -531,13 +551,6 @@
                 document.getElementById('placa').value = 'N/A'; // Se não encontrar a placa, define o valor como 'Não Encontrado'
             });
     }
-
-    // Chama a função updatePlaca a cada 3 segundos
-    setInterval(updatePlaca, 1000);
-
-    // Chama a função imediatamente ao carregar a página
-    updatePlaca();
-
     // Função para atualizar o campo placa da balança com o conteúdo do arquivo placa.txt
     function updatePlacaBalanca() {
         fetch('/placas_balanca')
@@ -567,6 +580,9 @@
 
                 // Adiciona a verificação e o alerta de sucesso
                 if (placa_frontal_balanca === cavalo && placa_traseira_balanca === carretas) {
+                    document.getElementById('programacao-id').innerText = '';
+                    document.getElementById('programacao-id-in').innerText = '';
+                    updateCPF();
                     // alert('As placas conferem com a programação!');
                     document.getElementById('alert-success-balanca').innerText = 'As placas conferem com a programação!';
                     document.getElementById('alert-success-balanca').style.display = 'block'; // Mostra o alerta
@@ -577,6 +593,7 @@
                     }, 500);
 
                 } else {
+                    // updateCPF();
                     document.getElementById('alert-success-balanca').style.display = 'none'; // Mostra o alerta
                     document.getElementById('alert-danger-balanca').innerText = 'Acesso divergente da programação!';
                     document.getElementById('alert-danger-balanca').style.display = 'block'; // Mostra o alerta
@@ -609,12 +626,6 @@
                 document.getElementById('placa_frontal_balanca').value = 'N/A';
             });
     }
-
-    // Chama a função updatePlacaBalanca a cada 3 segundos
-    setInterval(updatePlacaBalanca, 1000);
-
-    // Chama a função imediatamente ao carregar a página
-    updatePlacaBalanca();
 
     function novaFotoPlacaFrontal() {
         // Desabilita o botão e mostra o ícone de carregamento
@@ -863,11 +874,111 @@
             });
     }
 
+    function atualizarProgramacoesMotorista(cpf) {
+        fetch('/programacoes/cpf', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}' // Adicione isto se usar CSRF no Flask
+            },
+            body: JSON.stringify({ cpf: cpf })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Cria a tabela com classes Bootstrap
+                    let table = document.createElement('table');
+                    table.classList.add('table', 'table-striped', 'table-hover');
+                    table.id = 'programacoesTable'; // Adiciona um ID à tabela
+
+                    let thead = table.createTHead();
+                    let row = thead.insertRow();
+                    ['ID', 'Motorista', 'Cavalo', 'Carreta', 'Final'].forEach(header => {
+                        let th = document.createElement('th');
+                        th.textContent = header;
+                        row.appendChild(th);
+                    });
+
+                    let tbody = table.createTBody();
+                    data.programacoes_validas.forEach(programacao => {
+                        let row = tbody.insertRow();
+                        row.innerHTML = `
+                            <td>${programacao.id || ''}</td>
+                            <td>${programacao.pessoa || ''}</td>
+                            <td>${programacao.cavalo || ''}</td>
+                            <td>${programacao.carreta || ''}</td>
+                            <td>${programacao.datahora_fim || ''}</td>
+                        `;
+
+                        // Adiciona evento de clique na linha
+                        row.addEventListener('click', () => {
+                            // Remove a classe de seleção de todas as linhas
+                            const rows = tbody.getElementsByTagName('tr');
+                            for (let r of rows) {
+                                r.classList.remove('selected-row');
+                            }
+                            // Adiciona a classe de seleção à linha clicada
+                            row.classList.add('selected-row');
+                            // Atualiza o ID da programação selecionada
+                            document.getElementById('programacao-id').innerText = programacao.id;
+                            document.getElementById('programacao-id-in').innerText = programacao.id;
+
+                            // Atualiza o valor do input 'cavalo' com o valor da coluna 'cavalo'
+                            document.getElementById('cavalo').value = programacao.cavalo || ''; // Atualiza o valor do input
+                            document.getElementById('carretas').value = programacao.carreta || ''; // Atualiza o valor do input
+                            document.getElementById('inicio_programacao').value = programacao.datahora_inicio || ''; // Atualiza o valor do input
+                            document.getElementById('final_programacao').value = programacao.datahora_fim || ''; // Atualiza o valor do input
+                            
+                            
+                            final_programacao
+                        });
+                    });
+
+                    let programacoesMotoristaDiv = document.getElementById('programacoes-motorista');
+                    programacoesMotoristaDiv.innerHTML = '';
+                    programacoesMotoristaDiv.appendChild(table);
+
+                    // Inicializa o DataTables com ordenação desabilitada
+                    $(`#programacoesTable`).DataTable({
+                        "order": [], // Desabilita a ordenação inicial
+                        "pageLength": 5 // Define o número de entradas por página
+                    });
+
+                } else {
+                    // Limpa os campos
+                    document.getElementById('pessoa').value = '';
+                    document.getElementById('cavalo').value = '';
+                    document.getElementById('carretas').value = '';
+                    document.getElementById('final_programacao').value = '';
+                    // Desabilita o botão "Liberar Acesso"
+                    document.getElementById('liberar-acesso').disabled = true;
+
+                    // Verifica se a lista de programações está vazia
+                    programacoesMotoristaDiv.innerHTML = '<p>Nenhuma programação encontrada.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar as programações do motorista:', error);
+                document.getElementById('programacoes-motorista').innerHTML = '<p>Erro ao carregar as programações.</p>';
+            });
+    }
+
     // Chama a função imediatamente ao carregar a página
     atualizarFilaMotoristas();
-
     // Atualiza a fila a cada 3 segundos
     setInterval(atualizarFilaMotoristas, 1000);
+        // Chama a função updatePlaca a cada 3 segundos
+    setInterval(updatePlaca, 1000);
+    // Chama a função imediatamente ao carregar a página
+    updatePlaca();
+    // Chama a função updatePlacaBalanca a cada 3 segundos
+    setInterval(updatePlacaBalanca, 1000);
+    // Chama a função imediatamente ao carregar a página
+    updatePlacaBalanca();
+    // Chama a função updateCPF a cada 5 segundos
+    // setInterval(updateCPF, 1000);
+    // Chama a função imediatamente ao carregar a página
+    updateCPF();
 
 </script>
 

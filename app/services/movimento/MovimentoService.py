@@ -24,8 +24,8 @@ username = config.username
 password = config.password
 
 class Movimento:
-    def __init__(self, camera_url, largura=320, altura=240, x1=240, y1=180, x2=620, y2=250, area_minima_contorno=10):
-        # Inicializa a URL da câmera, largura, altura e outras configurações.
+    def __init__(self, camera_url, largura=320, altura=240, x1=240, y1=180, x2=620, y2=250, area_minima_contorno=1000):
+        # Inicializa a URL da câmera, largura, altura e outras configurações. usar 10
         self.camera_url = camera_url
         self.largura = largura
         self.altura = altura

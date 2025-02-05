@@ -1165,6 +1165,7 @@ class EventoController:
                             status_traseira = "ok" if carreta_programacao == placa_traseira else "nok"
                             status_geral = "ok" if status_frontal == "ok" and status_traseira == "ok" and status_pessoa == "ok" else "nok"
 
+                            # Se tiver Ok tudo ok
                             if status_geral == "ok":
                                 try:
                                     with open('app\\services\\lpr\\placa_frontal_balanca.txt', 'w') as f:
@@ -1182,6 +1183,7 @@ class EventoController:
                                     ultimo_evento.pesar = "N"
                                     ultimo_evento.placa_1 = placa_frontal
                                     ultimo_evento.placa_2 = placa_traseira
+                                    ultimo_evento.pos_fila = None
 
                                     db.session.commit()
                                 except Exception as e:

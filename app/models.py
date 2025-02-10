@@ -66,6 +66,7 @@ class Evento(BaseModel):
     lpr = db.Column(db.String(3), nullable=True, default='N')
     gravacao_equipamento = db.Column(db.String(3), nullable=True, default='N')
     pesar = db.Column(db.String(3), nullable=True, default='N')
+    contingencia = db.Column(db.String(3), nullable=True, default='N')
     codigo_erro = db.Column(db.String(10), nullable=True)
     imagem_path = db.Column(db.String(255), nullable=True)
     json = db.Column(db.JSON, nullable=True)

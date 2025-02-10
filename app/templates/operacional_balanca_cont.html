@@ -2,6 +2,7 @@
 
 {% block title %}Operacional{% endblock %}
 {% block content %}
+
 <div class="geral-body">
 
     <div class="operacional-container">
@@ -9,23 +10,22 @@
         <!-- Adicionar o div para o alert de sucesso -->
         <div id="alert-success" class="alert alert-success alert-dismissible fade show" role="alert"
             style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%);">
-            <span id="alert-success-json">Buscando Motoristas ...</span>
+            <span id="alert-success-json">Usando a Contingencia para Entrada e Saída...</span>
 
         </div>
 
 
         <div class="apple-form" id="foto" style="position: absolute; top: 80px; left: 20px; font-size: 16px;">
-            <img id="foto-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+            <img id="foto-img" src="{{ url_for('static', filename='images/contingencia.png') }}" alt=""
                 style="width: 100%; border-radius: 10px; display: block; margin: 0 auto;">
             <!-- Adiciona o id "foto-img" -->
         </div>
 
-        <div class="apple-form" id="direcao" style="position: absolute; top: 80px; right: 20px; font-size: 12px;">
+        <div class="apple-form" id="direcao" style="position: absolute; top: 80px; right: 20px; font-size: 12px;" hidden>
             <select id="tipo" class="apple-input" style="text-align: center;" onchange="atualizarFilaBalanca()">
-                <option value="0" selected>ENTRADA E SAÍDA</option>
+                <option value="0" selected>SELECIONE UMA DIREÇÃO: </option>
                 <option value="1">ENTRADA DE VEÍCULOS</option>
                 <option value="2">SAÍDA DE VEÍCULOS</option>
-                <!-- <option value="3">AMBAS DIREÇÕES</option> -->
             </select>
         </div>
         <!-- Adicionar o div para a data/hora no canto direito -->
@@ -33,212 +33,71 @@
         </div> -->
 
         <div class="apple-form" id="placa_detectada"
-            style="position: absolute; top: 225px; right: 20px; font-size: 16px;">
+            style="position: absolute; top: 285px; right: 20px; font-size: 16px;">
 
-            <img id="placa_frontal-img" src="{{ url_for('static', filename='images/load.gif') }}" alt=""
+            <img id="placa_frontal-img" src="{{ url_for('static', filename='images/contingencia.png') }}" alt=""
                 style="width: 100%; border-radius: 10px; display: block; margin: 0 auto;">
             <div class="m-3">
                 <!-- <label for="placa" class="mr-2">Placa detectada: </label> -->
             </div>
             <div class="m-3 d-flex align-items-center" id="placa_ocr">
                 <input type="text" class="apple-input flex-grow-1" id="placa" style="display: none;" value="" readonly>
-                <!-- Botão para nova foto -->
-                <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa" style="display: none;"
-                    alt="Aprovar Manualmente" onclick="aprovarPlacaManualmente()">
-                    <i class="fas fa-edit"></i> <!-- Ícone de edição -->
-                </button>
-                <!-- Botão para nova foto com ícone de carregamento -->
-                <button type="button" id="new_foto_placa_frontal" style="display: none;" class="btn btn-primary ml-2"
-                    onclick="novaFotoPlacaFrontal()" alt="Tirar nova foto">
-                    <i class="fas fa-camera" id="camera-icon"></i>
-                    <span id="loading-icon" style="display:none;" class="spinner-border spinner-border-sm" role="status"
-                        aria-hidden="true"></span> </button>
             </div>
 
         </div>
 
         <div class="apple-form text-center" id="placa_detectada_botao"
-            style="position: absolute; top: 515px; right: 20px; font-size: 16px; display: none;">
-            <!-- Botões agrupados para melhor semântica e centralizados com text-center -->
+            style="position: absolute; top: 545px; left: 50%; transform: translateX(-50%); font-size: 16px;">
             <div class="btn-group">
-                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal"
-                    data-target="#filaMotoristasModal">
-                    Motoristas
+                <button type="button" class="btn btn-success btn-lg" data-toggle="modal"
+                    onclick="verificarCpfEntrada()">
+                    Entrando
                 </button>
-                <button type="button" id="ver_balanca" class="btn btn-secondary btn-lg" data-toggle="modal"
-                    data-target="#placaModal">
-                    Balança
+                <button type="button" id="ver_balanca" class="btn btn-danger btn-lg" data-toggle="modal"   onclick="verificarCpfSaida()">
+                    Saindo
                 </button>
             </div>
         </div>
 
-        <!-- Modal Fila de Motoristas -->
-        <div class="modal fade" id="filaMotoristasModal" tabindex="-1" role="dialog"
-            aria-labelledby="filaMotoristasModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="filaMotoristasModalLabel">Fila de Motoristas</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="fila-motoristas">
-                            <!-- Conteúdo da fila será carregado aqui -->
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
-                    </div>
-                </div>
+<!-- Modal de Alerta para Entrada de Veículo -->
+<div class="modal fade" id="entradaVeiculoModal" tabindex="-1" role="dialog"
+    aria-labelledby="entradaVeiculoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="entradaVeiculoModalLabel">Confirmar Entrada de Veículo</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Você deseja dar a entrada deste veículo?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="confirmarEntrada" onclick="enviarEventoContingencia('IN')">Confirmar Entrada</button>
             </div>
         </div>
+    </div>
+</div>
 
         <!-- Modal -->
         <div class="modal fade" id="placaModal" tabindex="-1" role="dialog" aria-labelledby="placaModalLabel"
             aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
-                <!-- Adicionada a classe modal-dialog-centered -->
-                <div class="modal-content" style="min-height: 80vh;">
-
-                    <div id="alert-success-balanca" class="alert alert-success alert-dismissible fade show" role="alert"
-                        style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%); display: none;">
-                        <span id="alert-success-balanca">Carregando ...</span>
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-
-                    <div id="alert-danger-balanca" class="alert alert-danger alert-dismissible fade show" role="alert"
-                        style="position: absolute; top: 60px; left: 50%; transform: translateX(-50%); display: none;">
-                        <span id="alert-danger-balanca">Carregando ...</span>
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="placaModalLabel">Veículo na Balança</h5>
-
+                        <h5 class="modal-title" id="placaModalLabel">Confirmar Saída do Veículo</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="apple-form" style="position: relative; top: 0; left: 0; font-size: 16px;">
-                                    <img id="placa_frontal_balanca-img"
-                                        src="{{ url_for('static', filename='images/load.gif') }}" alt=""
-                                        style="width: 100%; border-radius: 10px; display: block; margin: 0 auto; cursor: zoom-in;"
-                                        onmouseover="zoomIn(this)" onmouseout="zoomOut(this)">
-                                    <div class="m-3">
-                                        <label for="placa-1">Placa: </label>
-                                        <div class="d-flex align-items-center">
-                                            <input type="text" class="apple-input" id="placa_frontal_balanca" value=""
-                                                readonly>
-                                            <button type="button" class="btn btn-danger ml-2"
-                                                id="aprovacao_manual_placa_frontal" alt="Aprovar Manualmente"
-                                                onclick="aprovarPlacaFrontalManualmenteBalanca()">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 d-flex justify-content-center align-items-center">
-                                <div class="apple-form" style="position: relative; font-size: 16px;">
-                                    <img id="container_superior-img"
-                                        src="{{ url_for('static', filename='images/load.gif') }}" alt=""
-                                        style="width: 70%; border-radius: 10px; display: block; margin: 0 auto;" hidden>
-                                    <div>
-                                        <div class="d-flex flex-column mr-2">
-                                            <label for="direcao-truck">Direção:</label>
-                                            <input type="text" class="apple-input" id="direcao-truck" value="" readonly>
-                                        </div>
-                                        <div class="d-flex flex-column">
-                                            <label for="facial-balanca">Motorista:</label>
-                                            <div class="d-flex align-items-center">
-                                                <input type="text" class="apple-input" id="facial-balanca"
-                                                    value="Aguardando..." readonly>
-                                                <!-- Botão para abrir o modal do motorista -->
-                                                <button type="button" class="btn btn-info ml-2" id="modal_motorista_btn"
-                                                    alt="Abrir Modal Motorista" onclick="abrirModalMotorista()">
-                                                    <i class="fas fa-info-circle"></i> <!-- Ícone de informação -->
-                                                </button>
-                                            </div>
-                                            <div id="programacao-selecionada" style="color: green; margin-top: 10px;">
-                                                Programação selecionada: <span id="programacao-id"></span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Modal Motorista -->
-                                    <div class="modal fade" id="motoristaModal" tabindex="-1" role="dialog"
-                                        aria-labelledby="motoristaModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title" id="motoristaModalLabel">Programações do
-                                                        Motorista</h5>
-                                                    <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                <span aria-hidden="true">&times;</span>
-                                                            </button> -->
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div id="programacoes-motorista">
-                                                        <!-- Conteúdo da fila será carregado aqui -->
-                                                    </div>
-                                                    <div id="programacao-selecionada"
-                                                        style="color: green; margin-top: 10px;">
-                                                        Programação selecionada: <span id="programacao-id-in"></span>
-                                                    </div>
-                                                </div>
-
-                                                <div class="modal-footer">
-                                                    <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button> -->
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="apple-form" style="position: relative; top: 0; left: 0; font-size: 16px;">
-                                    <img id="placa_traseira_balanca-img"
-                                        src="{{ url_for('static', filename='images/load.gif') }}" alt=""
-                                        style="width: 100%; border-radius: 10px; display: block; margin: 0 auto; cursor: zoom-in;"
-                                        onmouseover="zoomIn(this)" onmouseout="zoomOut(this)">
-                                    <div class="m-3">
-                                        <label for="placa-3">Placa: </label>
-                                        <div class="d-flex align-items-center">
-                                            <input type="text" class="apple-input" id="placa_traseira_balanca" value=""
-                                                readonly>
-                                            <button type="button" class="btn btn-danger ml-2"
-                                                id="aprovacao_manual_placa_traseira" alt="Aprovar Manualmente"
-                                                onclick="aprovarPlacaTraseiraManualmenteBalanca()">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <p>Você deseja dar saída neste veículo?</p>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-danger ml-2" id="aprovacao_manual_placa"
-                            alt="Aprovar Manualmente" onclick="aprovarPlacaManualmenteBalanca()">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button type="button" id="new_foto_placa_traseira_balanca" class="btn btn-primary"
-                            onclick="novasFotosPlacasBalanca()" alt="Tirar nova foto">
-                            <i class="fas fa-camera" id="camera-icon-traseira"></i>
-                            <span id="loading-icon-traseira" style="display:none;"
-                                class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" id="confirmarSaida" onclick="enviarEventoContingencia('OUT')">Confirmar Saída</button>
                     </div>
                 </div>
             </div>
@@ -250,15 +109,27 @@
                 <!-- Campo CPF ocupando uma coluna inteira -->
                 <div class="form-group cpf-full">
                     <label for="cpf">CPF:</label>
-                    <input type="text" class="apple-input" id="cpf" name="cpf" required>
+                    <input type="text" class="apple-input" id="cpf" name="cpf" required readonly="true">
                 </div>
 
                 <div class="form-group">
                     <label for="pessoa">Pessoa:</label>
-                    <input type="text" class="apple-input" id="pessoa" name="pessoa" value="{{ programacao.pessoa }}"
-                        readonly>
-                </div>
-
+                    <select class="apple-input" id="pessoa" name="pessoa" required>
+                        <option value="" selected disabled>Selecione uma pessoa</option>
+                        {% for item in programacao %}
+                            <option value="{{ item.id }}"
+                                    data-pessoa-nome ="{{ item.pessoa }}"
+                                    data-datahora-inicio="{{ item.datahora_inicio }}" 
+                                    data-datahora-fim="{{ item.datahora_fim }}"
+                                    data-cavalo="{{ item.cavalo }}"
+                                    data-carreta="{{ item.carreta }}"
+                                    data-cpf="{{ item.cpf }}">
+                                {{ item.pessoa }} - ID: {{ item.id }} - Cavalo: {{ item.cavalo }} - Carreta: {{ item.carreta }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>              
+                
                 <!-- Grid para os outros campos -->
                 <div class="form-grid">
                     <div class="form-group">
@@ -281,15 +152,32 @@
                         <input type="datetime-local" class="apple-input" id="final_programacao" name="final_programacao"
                             value="{{ programacao.datahora_fim }}" readonly>
                     </div>
-                </div>
+                </div>                
             </form>
         </div>
     </div>
 </div>
 
+
 <script>
 
-    // Adiciona um listener de evento para o campo CPF
+document.addEventListener("DOMContentLoaded", function () {
+    const selectPessoa = document.getElementById("pessoa");
+
+    selectPessoa.addEventListener("change", function () {
+        const opcao = selectPessoa.options[selectPessoa.selectedIndex]; // Obtém a opção selecionada
+
+        document.getElementById("cpf").value = opcao.getAttribute("data-cpf") || "";
+        document.getElementById("cavalo").value = opcao.getAttribute("data-cavalo") || "";
+        document.getElementById("carretas").value = opcao.getAttribute("data-carreta") || "";
+        document.getElementById("inicio_programacao").value = opcao.getAttribute("data-datahora-inicio") || "";
+        document.getElementById("final_programacao").value = opcao.getAttribute("data-datahora-fim") || "";
+
+        // alert("ID selecionado: " + opcao.value);
+    });
+});
+
+       // Adiciona um listener de evento para o campo CPF
     document.getElementById('cpf').addEventListener('input', function () {
         var cpf = this.value;
 
@@ -299,7 +187,6 @@
             buscarProgramacao(cpf);
         }
     });
-
 
     // Adiciona um listener de evento para o campo placa
     document.getElementById('placa').addEventListener('input', function () {
@@ -333,6 +220,24 @@
         document.getElementById('placa').style.borderStyle = 'solid'; // Define o estilo da borda como sólido
     }
 
+    function verificarCpfEntrada() {
+        var cpf = document.getElementById('cpf').value;
+        if (cpf === '') {
+            alert('Por favor, selecione uma programação antes de confirmar a entrada.');
+            return; // Impede a abertura do modal
+        }
+        $('#entradaVeiculoModal').modal('show');
+    }
+
+    function verificarCpfSaida() {
+        var cpf = document.getElementById('cpf').value;
+        if (cpf === '') {
+            alert('Por favor, selecione uma programação antes de confirmar a saída.');
+            return; // Impede a abertura do modal
+        }
+        $('#placaModal').modal('show');
+    }
+    
     function abrirModalMotorista() {
         $('#motoristaModal').modal('show'); // Abre o modal do motorista
     }
@@ -353,7 +258,7 @@
     }
 
     function atualizarFilaBalanca() {
-        updateCPF();
+        // updateCPF();
         var direcao = document.getElementById('tipo').value;
         fetch(`/fila_balanca?direcao=${direcao}`)
             .then(response => response.json())
@@ -362,7 +267,7 @@
                 console.log(data);
             })
             .catch(error => console.error('Erro ao atualizar a fila:', error));
-        updateCPF();
+            // updateCPF();
     }
 
     function verificarDirecao() {
@@ -394,101 +299,7 @@
             })
             .catch(error => console.error('Erro ao verificar a direção:', error));
     }
-    // Função para atualizar o campo CPF com o último CPF inserido
-    function updateCPF() {
-        var direcaoSelecionada = document.getElementById('tipo').value; // Obtém a direção selecionada
-        fetch(`/fila_balanca?direcao=${direcaoSelecionada}`)
-            .then(response => response.json())
-            .then(data => {
-                if (!data) {
-                    console.error("Dados inválidos recebidos de /fila_balanca");
-                    document.getElementById('placa_frontal-img').src = '';
-                    document.getElementById('cpf').value = '';
-                    document.getElementById('alert-danger-json').innerText = 'Erro ao obter dados.';
-                    return;
-                } else {
-                    // Verifica a direção selecionada e atualiza os campos correspondentes
-                    if (direcaoSelecionada === "1" && data.direcao == "IN") {
-                        document.getElementById('direcao-truck').value = "ENTRANDO ...";
-                        document.getElementById('facial-balanca').value = data.pessoa;
-                    } else if (direcaoSelecionada === "2" && data.direcao == "OUT") {
-                        document.getElementById('direcao-truck').value = "SAINDO ...";
-                        document.getElementById('facial-balanca').value = data.pessoa;
-                    } else if (direcaoSelecionada === "0") {
-                        // Ambas as direções
-                        document.getElementById('direcao-truck').value = data.direcao == "OUT" ? "ENTRANDO ..." : "SAINDO ...";
-                        document.getElementById('facial-balanca').value = data.pessoa;
-                    } else {
-                        // Se não corresponder a direção selecionada, não atualiza os campos
-                        return;
-                    }
-                }
 
-                document.getElementById('cpf').value = data.cpf || '';
-
-                buscarProgramacao(data.cpf);
-                atualizarProgramacoesMotorista(data.cpf);
-                console.log('######## Data ##########', data);
-
-                // Fotos das placas
-                document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
-                document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
-                document.getElementById('container_superior-img').src = 'data:image/jpeg;base64,' + data.container_superior;
-                document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
-
-                if (data.imagem_base64) {
-                    console.log('########## Entrou aqui!!!!!: ')
-                    document.getElementById('foto-img').src = 'data:image/jpeg;base64,' + data.imagem_base64;
-                    document.getElementById('foto').style.display = 'block';
-
-                    if (document.getElementById('cavalo').value != '') {
-                        document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
-
-                        document.getElementById('placa').style.display = 'block';
-                        document.getElementById('placa_detectada_botao').style.display = 'block';
-                        document.getElementById('new_foto_placa_frontal').style.display = 'block';
-                        document.getElementById('aprovacao_manual_placa').style.display = 'block';
-
-                    } else {
-                        // document.getElementById('placa_frontal-img').src = 'http://127.0.0.1/static/images/load.gif';
-                        document.getElementById('placa').style.display = 'block';
-                        document.getElementById('placa_detectada_botao').style.display = 'block';
-                        document.getElementById('new_foto_placa_frontal').style.display = 'block';
-                        document.getElementById('aprovacao_manual_placa').style.display = 'block';
-
-                    }
-                    document.getElementById('alert-success').style.display = 'block';
-                    document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
-                    document.getElementById('container_superior-img').src = 'data:image/jpeg;base64,' + data.container_superior;
-                    document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
-                } else {
-                    document.getElementById('foto-img').src = 'static\\images\\sem_foto.jpg';
-                    document.getElementById('placa_frontal-img').src = 'static\\images\\sem_foto.jpg';
-                    document.getElementById('placa_frontal_balanca-img').src = 'static\\images\\sem_foto.jpg';
-                    document.getElementById('container_superior-img').src = 'static\\images\\sem_foto.jpg';
-                    document.getElementById('placa_frontal_balanca-img').src = 'static\\images\\sem_foto.jpg';
-                    document.getElementById('placa_traseira_balanca-img').src = 'static\\images\\sem_foto.jpg';
-                    document.getElementById('placa_detectada_botao').style.display = 'block';
-                    document.getElementById('placa').style.display = 'block';
-
-                    document.getElementById('aprovacao_manual_placa').style.display = 'block';
-                    document.getElementById('new_foto_placa_frontal').style.display = 'block';
-
-                    console.warn("Nenhuma imagem em base64 encontrada.");
-                }
-
-                if (data.mensagem) {
-                    document.getElementById('alert-success-json').innerText = data.mensagem;
-                    document.getElementById('alert-success-json').innerText = 'Programação encontrada! Liberado(a).';
-                }
-
-            })
-            .catch(error => {
-                console.error('Erro ao atualizar CPF:', error);
-                document.getElementById('cpf').value = '';
-                document.getElementById('alert-danger-json').innerText = 'Erro na conexão. Verifique sua internet.';
-            });
-    }
     // Função para buscar os dados da programação
     function buscarProgramacao(cpf) {
         // Envia a requisição AJAX para buscar os dados da programação
@@ -528,7 +339,7 @@
                 console.error('Erro:', error);
             });
     }
-    // Função para atualizar o campo placa com o conteúdo do arquivo placa.txt
+     // Função para atualizar o campo placa com o conteúdo do arquivo placa.txt
     function updatePlaca() {
         fetch('/placa_frontal') // Use '/placa.txt' para acessar o arquivo
             .then(response => response.text())
@@ -583,7 +394,7 @@
                 if (placa_frontal_balanca === cavalo && placa_traseira_balanca === carretas) {
                     document.getElementById('programacao-id').innerText = '';
                     document.getElementById('programacao-id-in').innerText = '';
-                    updateCPF();
+                    // updateCPF();
                     // alert('As placas conferem com a programação!');
                     document.getElementById('alert-success-balanca').innerText = 'As placas conferem com a programação!';
                     document.getElementById('alert-success-balanca').style.display = 'block'; // Mostra o alerta
@@ -650,7 +461,7 @@
             })
             .then(data => { // Executa após receber a resposta JSON
                 console.log('Resposta do servidor:', data);
-                updateCPF(); // Chama updateCPF após o retorno da requisição
+                // updateCPF(); // Chama updateCPF após o retorno da requisição
             })
             .catch(error => {
                 console.error('Erro ao tirar nova foto:', error);
@@ -713,7 +524,7 @@
                 console.log('Resposta do servidor:', data);
                 // Atualize a interface com a nova foto, se necessário.
                 // Sugestão: chame uma função para atualizar a imagem, similar a updateCPF().
-                updateCPF(); // Exemplo: atualiza a interface após tirar a foto.
+                // updateCPF(); // Exemplo: atualiza a interface após tirar a foto.
             })
             .catch(error => {
                 console.error('Erro ao tirar nova foto:', error);
@@ -827,12 +638,8 @@
         var direcaoSelecionada = document.getElementById('tipo').value; // Obtém a direção selecionada
 
         fetch(`/fila_motoristas_pesar?direcao=${direcaoSelecionada}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+
+            .then(response => response.json())
             .then(data => {
                 // Cria a tabela com classes Bootstrap
                 let table = document.createElement('table');
@@ -841,8 +648,7 @@
 
                 let thead = table.createTHead();
                 let row = thead.insertRow();
-                // Adiciona o cabeçalho da nova coluna
-                ['ID', 'Direção', 'Motorista', 'CPF', 'Data/Hora', 'Subir'].forEach(header => {
+                ['ID', 'Direção', 'Motorista', 'CPF', 'Data/Hora'].forEach(header => {
                     let th = document.createElement('th');
                     th.textContent = header;
                     row.appendChild(th);
@@ -851,29 +657,15 @@
                 let tbody = table.createTBody();
                 data.forEach(item => {
                     let row = tbody.insertRow();
-                    // Adiciona as células de dados existentes
                     ['id', 'direcao', 'pessoa', 'cpf', 'created_at'].forEach(key => {
                         let cell = row.insertCell();
                         let text = document.createTextNode(item[key] || '');
                         cell.appendChild(text);
                     });
-
-                    // Adiciona a célula com o ícone
-                    let actionCell = row.insertCell();
-                    let button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'btn btn-sm btn-success'; // Adicione classes Bootstrap para estilização
-                    // Substitui o texto por um ícone
-                    button.innerHTML = '<i class="fas fa-arrow-up"></i>';
-                    button.addEventListener('click', () => {
-                        const eventId = item.id; // Obtém o ID do evento
-                        atualizarPosicaoFila(eventId); // Chama a função para atualizar a posição na fila
-                    });
-                    actionCell.appendChild(button);
                 });
 
                 let filaMotoristasDiv = document.getElementById('fila-motoristas');
-                filaMotoristasDiv.innerHTML = ''; // Limpa o conteúdo anterior
+                filaMotoristasDiv.innerHTML = '';
                 filaMotoristasDiv.appendChild(table);
 
                 // Inicializa o DataTables com ordenação desabilitada
@@ -890,35 +682,7 @@
             })
             .catch(error => {
                 console.error('Erro ao atualizar a fila de motoristas:', error);
-                const filaMotoristasDiv = document.getElementById('fila-motoristas');
-                filaMotoristasDiv.innerHTML = '<p>Erro ao carregar a fila. Detalhes: ' + error.message + '</p>'; // Mensagem de erro mais informativa
-            });
-    }
-
-    // Nova função para atualizar a posição na fila
-    function atualizarPosicaoFila(eventId) {
-        fetch(`/eventos/${eventId}/atualizar_pos_fila`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token() }}' // Inclua o token CSRF se necessário
-            }
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    console.log('Posição na fila atualizada com sucesso!');
-                    updateCPF();
-                    // Atualize a interface se necessário, por exemplo, recarregando a tabela
-                    atualizarFilaMotoristas();
-                } else {
-                    console.error('Erro ao atualizar a posição na fila:', data.message);
-                    alert('Erro ao atualizar a posição na fila. Por favor, tente novamente.');
-                }
-            })
-            .catch(error => {
-                console.error('Erro ao atualizar a posição na fila:', error);
-                alert('Erro ao atualizar a posição na fila. Por favor, tente novamente.');
+                document.getElementById('fila-motoristas').innerHTML = '<p>Erro ao carregar a fila.</p>';
             });
     }
 
@@ -976,8 +740,8 @@
                             document.getElementById('carretas').value = programacao.carreta || ''; // Atualiza o valor do input
                             document.getElementById('inicio_programacao').value = programacao.datahora_inicio || ''; // Atualiza o valor do input
                             document.getElementById('final_programacao').value = programacao.datahora_fim || ''; // Atualiza o valor do input
-
-
+                            
+                            
                             final_programacao
                         });
                     });
@@ -1011,11 +775,110 @@
             });
     }
 
+    function enviarEventoContingencia(direcao) {
+    // Coleta os dados do formulário
+        const selectPessoa = document.getElementById("pessoa");
+        const opcao = selectPessoa.options[selectPessoa.selectedIndex];
+        const pessoaNome = opcao.getAttribute("data-pessoa-nome"); // Obtém o nome da pessoa
+        const cpf = document.getElementById('cpf').value;
+        const cavalo = document.getElementById('cavalo').value;
+        const carretas = document.getElementById('carretas').value;
+        const url = document.getElementById('placa').value; // Supondo que a placa seja o URL da imagem
+        // Obtém o timestamp atual
+        const timestamp = Math.floor(Date.now() / 1000);
+
+        const jsonData = {
+            'AttendanceState': '0',
+            'CardName': pessoaNome, // Usando o nome da pessoa do atributo data-pessoa-nome
+            'CardNo': cpf, // Usando o CPF do formulário
+            'CardType': '0',
+            'CreateTime': timestamp, // Ajuste conforme necessário
+            'Door': '0',
+            'ErrorCode': '0',
+            'FaceIndex': '0',
+            'HatColor': 'Other',
+            'HatType': '0',
+            'Mask': '0',
+            'Method': '15',
+            'Notes': '',
+            'Password': '',
+            'ReaderID': '1',
+            'RecNo': '22783',
+            'RemainingTimes': '0',
+            'ReservedInt': '0',
+            'ReservedString': '',
+            'RoomNumber': '',
+            'Status': '1',
+            'Type': direcao === 'IN' ? 'Entry' : 'Exit', // Ajusta o tipo com base na direção
+            'URL': url, // Usando a URL da imagem
+            'UserID': '0',
+            'UserType': '0',
+            'direcao': direcao
+        };
+
+        fetch('/novo_evento_contingencia', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}' // Adicione isto se usar CSRF no Flask
+            },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Erro ao enviar o evento');
+            }
+        })
+        .then(data => {
+            console.log('Evento enviado com sucesso:', data);
+            // Limpa os campos do formulário após o envio bem-sucedido
+            document.getElementById('cpf').value = '';
+            document.getElementById('cavalo').value = '';
+            document.getElementById('carretas').value = '';
+            document.getElementById('placa').value = '';
+            document.getElementById('pessoa').value = ''; // Limpa o select de pessoa
+            // Fecha o modal (Bootstrap) usando jQuery
+            document.getElementById('inicio_programacao').value = '';
+            document.getElementById('final_programacao').value = '';
+            $('#entradaVeiculoModal').modal('hide');
+            $('#placaModal').modal('hide');
+            
+            // Adicione aqui a limpeza de outros campos do formulário, se necessário
+            // Exemplo: document.getElementById('outroCampo').value = '';
+            // Mostra a mensagem de sucesso
+            document.getElementById('alert-success-json').innerText = 'Evento enviado com sucesso!';
+            document.getElementById('alert-success').style.display = 'block';
+
+            setTimeout(function() {
+                document.getElementById('alert-success').style.display = 'none';
+            }, 3000); // Oculta a mensagem após 3 segundos
+        })
+        .catch(error => {
+            // Fecha o modal (Bootstrap) usando jQuery em caso de erro
+            $('#entradaVeiculoModal').modal('hide');
+            $('#placaModal').modal('hide');
+            console.error('Erro ao enviar o evento:', error);
+            // Mostra a mensagem de erro
+            document.getElementById('alert-success-json').innerText = 'Erro ao enviar o evento: ' + error;
+            document.getElementById('alert-success').classList.remove('alert-success');
+            document.getElementById('alert-success').classList.add('alert-danger');
+            document.getElementById('alert-success').style.display = 'block';
+
+            setTimeout(function() {
+                document.getElementById('alert-success').style.display = 'none';
+                document.getElementById('alert-success').classList.remove('alert-danger');
+                document.getElementById('alert-success').classList.add('alert-success');
+            }, 3000); // Oculta a mensagem após 3 segundos
+        });
+    }
+ 
     // Chama a função imediatamente ao carregar a página
     atualizarFilaMotoristas();
     // Atualiza a fila a cada 3 segundos
     setInterval(atualizarFilaMotoristas, 1000);
-    // Chama a função updatePlaca a cada 3 segundos
+        // Chama a função updatePlaca a cada 3 segundos
     setInterval(updatePlaca, 1000);
     // Chama a função imediatamente ao carregar a página
     updatePlaca();
@@ -1026,7 +889,7 @@
     // Chama a função updateCPF a cada 5 segundos
     // setInterval(updateCPF, 1000);
     // Chama a função imediatamente ao carregar a página
-    updateCPF();
+    // updateCPF();
 
 </script>
 

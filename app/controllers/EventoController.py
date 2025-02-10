@@ -767,27 +767,27 @@ class EventoController:
                                 eventos = (
                                     Evento.query
                                     .filter(Evento.direcao == 'IN', Evento.pesar == 'Y', Evento.pos_fila != '')
-                                    .order_by(Evento.pos_fila.asc())
+                                    .order_by(Evento.pos_fila.desc())
                                     .all()
                                 )
                             elif direcao == "2":  # Direção OUT
                                 eventos = (
                                     Evento.query
                                     .filter(Evento.direcao == 'OUT', Evento.pesar == 'Y', Evento.pos_fila != '')
-                                    .order_by(Evento.pos_fila.asc())
+                                    .order_by(Evento.pos_fila.desc())
                                     .all()
                                 )
                             else:  # Ambas as direções
                                 eventos = (
                                     Evento.query
                                     .filter(Evento.pesar == 'Y', Evento.pos_fila != '')
-                                    .order_by(Evento.pos_fila.asc())
+                                    .order_by(Evento.pos_fila.desc())
                                     .all()
                                 )
                             return eventos
                         
                         eventos = obter_eventos_por_direcao(direcao)
-
+                        
                         # Combina as listas, com os eventos 'OUT' no início
                         eventos_pesar = eventos
 
@@ -805,6 +805,7 @@ class EventoController:
                         else:
                             mensagem = ""
 
+                        print('###Eventos:',eventos)
                         if ultimo_evento.direcao == "OUT":
                             current_device_ip = device_ip_out
                             print('####### IP de Saida: ',current_device_ip)
@@ -976,21 +977,21 @@ class EventoController:
                     eventos = (
                         Evento.query
                         .filter(Evento.direcao == 'IN', Evento.pesar == 'Y', Evento.pos_fila != '')
-                        .order_by(Evento.pos_fila.asc())
+                        .order_by(Evento.pos_fila.desc())
                         .all()
                     )
                 elif direcao == "2":  # Direção OUT
                     eventos = (
                         Evento.query
                         .filter(Evento.direcao == 'OUT', Evento.pesar == 'Y', Evento.pos_fila != '')
-                        .order_by(Evento.pos_fila.asc())
+                        .order_by(Evento.pos_fila.desc())
                         .all()
                     )
                 else:  # Ambas as direções
                     eventos = (
                         Evento.query
                         .filter(Evento.pesar == 'Y', Evento.pos_fila != '')
-                        .order_by(Evento.pos_fila.asc())
+                        .order_by(Evento.pos_fila.desc())
                         .all()
                     )
                 return eventos
@@ -1123,8 +1124,8 @@ class EventoController:
                 # Função para obter eventos com base na direção
                 def obter_eventos_por_direcao():
                     eventos_resultados = {
-                        "entrada": Evento.query.filter(Evento.direcao == 'IN', Evento.pesar == 'Y', Evento.pos_fila != '').order_by(Evento.pos_fila.asc()).all(),
-                        "saida": Evento.query.filter(Evento.direcao == 'OUT', Evento.pesar == 'Y', Evento.pos_fila != '').order_by(Evento.pos_fila.asc()).all()
+                        "entrada": Evento.query.filter(Evento.direcao == 'IN', Evento.pesar == 'Y', Evento.pos_fila != '').order_by(Evento.pos_fila.desc()).all(),
+                        "saida": Evento.query.filter(Evento.direcao == 'OUT', Evento.pesar == 'Y', Evento.pos_fila != '').order_by(Evento.pos_fila.desc()).all()
                     }
                     return eventos_resultados
 
@@ -1259,7 +1260,6 @@ class EventoController:
                 print(f"Erro ao obter as placas: {e}")
                 return jsonify({"error": "Erro ao obter as placas."}), 500
 
-
         @self.blueprint.route('/verificar_direcao', methods=['GET'])
         def verificar_direcao(direcao = 0):
             direcao = request.args.get('direcao')   
@@ -1276,3 +1276,73 @@ class EventoController:
 
             return jsonify({'disponivel': True})  # Direção disponível
         
+        @self.blueprint.route('/novo_evento_contingencia', methods=['GET', 'POST'])
+        def novo_evento_contingencia():            
+            # Obtém os dados enviados como JSON
+            data = request.get_json()
+            print('Json Recebido: ', data)
+            # exit()
+            if not data:
+                return jsonify({"error": "Invalid or missing JSON data"}), 400
+            
+            # Extrai os dados do JSON
+            direcao = data.get('direcao')
+            codigo_erro = data.get('ErrorCode')
+            id_equipamento = data.get('UserID')
+            id_evento = data.get('CreateTime')
+            imagem_path = data.get('URL')
+            cpf = data.get('CardNo')
+            pessoa = data.get('CardName')
+            pos_fila = None  # Defina conforme necessário
+            contingencia = "Y"
+            
+            # Define o valor de 'pesar' com base na direção
+            pesar = "N" if direcao == "IN" else "N"  # Se direção for IN, pesar = "Y", caso contrário, pesar = "N"
+
+            # Cria um novo objeto Evento
+            novo_evento = Evento(direcao=direcao, codigo_erro=codigo_erro, id_equipamento=id_equipamento, id_evento=id_evento, imagem_path=imagem_path, json=data, cpf=cpf, pessoa=pessoa, pos_fila=pos_fila, pesar=pesar, contingencia=contingencia)
+
+            # Verifica se já existe um evento com o mesmo id_evento
+            evento_existente = Evento.query.filter_by(id_evento=id_evento).first()
+            
+            if evento_existente:
+                print("Evento já adicionado")
+                return jsonify({"status": "Evento Duplicado!"}), 409  # Conflito
+
+            # Adiciona o novo evento ao banco de dados
+            try:
+                db.session.add(novo_evento)
+                db.session.commit() 
+                return jsonify({"status": "Evento inserido com sucesso"}), 201  # Criado
+            except Exception as e:
+                print(f"Erro ao inserir evento no banco: {e}")
+                return jsonify({"error": "Erro ao inserir evento"}), 500  # Erro interno do servidor
+            
+        # Nova rota para atualizar a posição na fila
+        @self.blueprint.route('/eventos/<int:id>/atualizar_pos_fila', methods=['POST'])
+        @csrf.exempt  # Usa a instância csrf para desabilitar CSRF nessa rota
+        def atualizar_pos_fila(id):
+            try:
+                # Obtém o evento a ser atualizado
+                evento = Evento.query.get_or_404(id)
+                print('######Fila: ',id)
+                # Busca eventos com pos_fila diferente de None
+                eventos_na_fila = Evento.query.filter(Evento.pos_fila != None).all()
+
+                # Se não houver eventos na fila, define a posição como 1
+                if not eventos_na_fila:
+                    evento.pos_fila = 1
+                else:
+                    # Encontra a maior posição na fila
+                    maior_pos_fila = max(evento.pos_fila for evento in eventos_na_fila)
+                    print('######Fila: ',maior_pos_fila)
+                    # Atualiza a posição do evento para o próximo valor disponível
+                    evento.pos_fila = maior_pos_fila + 1
+
+                # Salva as alterações no banco de dados
+                db.session.commit()
+                return jsonify({"status": "success", "message": "Posição na fila atualizada com sucesso"}), 200
+            except Exception as e:
+                print(f"Erro ao atualizar posição na fila: {e}")
+                traceback.print_exc()
+                return jsonify({"status": "error", "message": "Erro ao atualizar posição na fila"}), 500

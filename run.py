@@ -83,7 +83,7 @@ if __name__ == '__main__':
         ips_entrada, ips_saida = equipamento_controller.get_equipamento_id(unidade)
     # Itera sobre os IPs de entrada e saída
     for ip_entrada in ips_entrada:
-        # print('##IP Entrada:', ip_entrada)
+        print('##IP Entrada:', ip_entrada)
         device_ip_in = ip_entrada
         for ip_saida in ips_saida:
             device_ip_out = ip_saida
@@ -91,10 +91,9 @@ if __name__ == '__main__':
 
             # Cria instâncias de EventRecorder para entrada e saída
             recorder1 = EventRecorder(device_ip_in, username, password, 'IN')
-            print('Recorder de Entrada: ',device_ip_in)
+            print('Recorder de Entrada: ', device_ip_in)
             recorder2 = EventRecorder(device_ip_out, username, password, 'OUT')
-            print('Recorder de Saída: ',device_ip_out)
-            # Inicia a detecção de movimento como um processo separado
+            print('Recorder de Saída: ', device_ip_out)
 
             # Inicia as threads dos EventRecorders
             biometria_in_pedestre = restart_thread(biometria_in_pedestre, recorder1, "Biometria_in_pedestre")
@@ -103,6 +102,9 @@ if __name__ == '__main__':
             movimento_process = run_movimento_service()
             if movimento_process:
                 logging.info(f"MovimentoService iniciado com PID: {movimento_process.pid}")
+
+            # Adicione um pequeno delay para evitar sobrecarga
+            time.sleep(1)  # Espera 1 segundo antes de processar o próximo par de IPs
 
     while True:
         try:

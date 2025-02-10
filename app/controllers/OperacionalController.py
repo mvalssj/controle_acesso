@@ -22,3 +22,12 @@ class OperacionalController:
             programacao = Programacao.query.all()
             unidades = Unidade.query.all()
             return render_template('operacional_balanca.html', programacao=programacao, unidades=unidades)
+        
+        # Rota para listar todos os eventos e programações
+        @self.blueprint.route('/operacional_balanca_cont')
+        def operacional_balanca_cont():
+            # Renderiza a página de operacional, passando a lista de eventos e programações como contexto
+            # Obtenha a programação do banco de dados ou de outra fonte
+            programacao = Programacao.query.filter(Programacao.cavalo != '').all()  # Filtra onde cavalo não é vazio
+            unidades = Unidade.query.all()
+            return render_template('operacional_balanca_cont.html', programacao=programacao, unidades=unidades)

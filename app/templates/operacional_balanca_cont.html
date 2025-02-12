@@ -21,7 +21,8 @@
             <!-- Adiciona o id "foto-img" -->
         </div>
 
-        <div class="apple-form" id="direcao" style="position: absolute; top: 80px; right: 20px; font-size: 12px;" hidden>
+        <div class="apple-form" id="direcao" style="position: absolute; top: 80px; right: 20px; font-size: 12px;"
+            hidden>
             <select id="tipo" class="apple-input" style="text-align: center;" onchange="atualizarFilaBalanca()">
                 <option value="0" selected>SELECIONE UMA DIREÇÃO: </option>
                 <option value="1">ENTRADA DE VEÍCULOS</option>
@@ -46,40 +47,39 @@
 
         </div>
 
-        <div class="apple-form text-center" id="placa_detectada_botao"
-            style="position: absolute; top: 545px; left: 50%; transform: translateX(-50%); font-size: 16px;">
-            <div class="btn-group">
-                <button type="button" class="btn btn-success btn-lg" data-toggle="modal"
-                    onclick="verificarCpfEntrada()">
-                    Entrando
-                </button>
-                <button type="button" id="ver_balanca" class="btn btn-danger btn-lg" data-toggle="modal"   onclick="verificarCpfSaida()">
-                    Saindo
-                </button>
-            </div>
+        <div class="btn-group"
+            style="position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%); font-size: 16px;">
+            <button type="button" class="btn btn-success btn-lg" data-toggle="modal" onclick="verificarCpfEntrada()">
+                Entrando
+            </button>
+            <button type="button" id="ver_balanca" class="btn btn-danger btn-lg" data-toggle="modal"
+                onclick="verificarCpfSaida()">
+                Saindo
+            </button>
         </div>
 
-<!-- Modal de Alerta para Entrada de Veículo -->
-<div class="modal fade" id="entradaVeiculoModal" tabindex="-1" role="dialog"
-    aria-labelledby="entradaVeiculoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="entradaVeiculoModalLabel">Confirmar Entrada de Veículo</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Você deseja dar a entrada deste veículo?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="confirmarEntrada" onclick="enviarEventoContingencia('IN')">Confirmar Entrada</button>
+        <!-- Modal de Alerta para Entrada de Veículo -->
+        <div class="modal fade" id="entradaVeiculoModal" tabindex="-1" role="dialog"
+            aria-labelledby="entradaVeiculoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="entradaVeiculoModalLabel">Confirmar Entrada de Veículo</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Você deseja dar a entrada deste veículo?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" id="confirmarEntrada"
+                            onclick="enviarEventoContingencia('IN')">Confirmar Entrada</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
         <!-- Modal -->
         <div class="modal fade" id="placaModal" tabindex="-1" role="dialog" aria-labelledby="placaModalLabel"
@@ -97,7 +97,8 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                        <button type="button" class="btn btn-danger" id="confirmarSaida" onclick="enviarEventoContingencia('OUT')">Confirmar Saída</button>
+                        <button type="button" class="btn btn-danger" id="confirmarSaida"
+                            onclick="enviarEventoContingencia('OUT')">Confirmar Saída</button>
                     </div>
                 </div>
             </div>
@@ -117,19 +118,17 @@
                     <select class="apple-input" id="pessoa" name="pessoa" required>
                         <option value="" selected disabled>Selecione uma pessoa</option>
                         {% for item in programacao %}
-                            <option value="{{ item.id }}"
-                                    data-pessoa-nome ="{{ item.pessoa }}"
-                                    data-datahora-inicio="{{ item.datahora_inicio }}" 
-                                    data-datahora-fim="{{ item.datahora_fim }}"
-                                    data-cavalo="{{ item.cavalo }}"
-                                    data-carreta="{{ item.carreta }}"
-                                    data-cpf="{{ item.cpf }}">
-                                {{ item.pessoa }} - ID: {{ item.id }} - Cavalo: {{ item.cavalo }} - Carreta: {{ item.carreta }}
-                            </option>
+                        <option value="{{ item.id }}" data-pessoa-nome="{{ item.pessoa }}"
+                            data-datahora-inicio="{{ item.datahora_inicio }}"
+                            data-datahora-fim="{{ item.datahora_fim }}" data-cavalo="{{ item.cavalo }}"
+                            data-carreta="{{ item.carreta }}" data-cpf="{{ item.cpf }}">
+                            {{ item.pessoa }} - ID: {{ item.id }} - Cavalo: {{ item.cavalo }} - Carreta: {{ item.carreta
+                            }}
+                        </option>
                         {% endfor %}
                     </select>
-                </div>              
-                
+                </div>
+
                 <!-- Grid para os outros campos -->
                 <div class="form-grid">
                     <div class="form-group">
@@ -152,7 +151,7 @@
                         <input type="datetime-local" class="apple-input" id="final_programacao" name="final_programacao"
                             value="{{ programacao.datahora_fim }}" readonly>
                     </div>
-                </div>                
+                </div>
             </form>
         </div>
     </div>
@@ -161,23 +160,23 @@
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function () {
-    const selectPessoa = document.getElementById("pessoa");
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectPessoa = document.getElementById("pessoa");
 
-    selectPessoa.addEventListener("change", function () {
-        const opcao = selectPessoa.options[selectPessoa.selectedIndex]; // Obtém a opção selecionada
+        selectPessoa.addEventListener("change", function () {
+            const opcao = selectPessoa.options[selectPessoa.selectedIndex]; // Obtém a opção selecionada
 
-        document.getElementById("cpf").value = opcao.getAttribute("data-cpf") || "";
-        document.getElementById("cavalo").value = opcao.getAttribute("data-cavalo") || "";
-        document.getElementById("carretas").value = opcao.getAttribute("data-carreta") || "";
-        document.getElementById("inicio_programacao").value = opcao.getAttribute("data-datahora-inicio") || "";
-        document.getElementById("final_programacao").value = opcao.getAttribute("data-datahora-fim") || "";
+            document.getElementById("cpf").value = opcao.getAttribute("data-cpf") || "";
+            document.getElementById("cavalo").value = opcao.getAttribute("data-cavalo") || "";
+            document.getElementById("carretas").value = opcao.getAttribute("data-carreta") || "";
+            document.getElementById("inicio_programacao").value = opcao.getAttribute("data-datahora-inicio") || "";
+            document.getElementById("final_programacao").value = opcao.getAttribute("data-datahora-fim") || "";
 
-        // alert("ID selecionado: " + opcao.value);
+            // alert("ID selecionado: " + opcao.value);
+        });
     });
-});
 
-       // Adiciona um listener de evento para o campo CPF
+    // Adiciona um listener de evento para o campo CPF
     document.getElementById('cpf').addEventListener('input', function () {
         var cpf = this.value;
 
@@ -237,7 +236,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         $('#placaModal').modal('show');
     }
-    
+
     function abrirModalMotorista() {
         $('#motoristaModal').modal('show'); // Abre o modal do motorista
     }
@@ -267,7 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log(data);
             })
             .catch(error => console.error('Erro ao atualizar a fila:', error));
-            // updateCPF();
+        // updateCPF();
     }
 
     function verificarDirecao() {
@@ -339,7 +338,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error('Erro:', error);
             });
     }
-     // Função para atualizar o campo placa com o conteúdo do arquivo placa.txt
+    // Função para atualizar o campo placa com o conteúdo do arquivo placa.txt
     function updatePlaca() {
         fetch('/placa_frontal') // Use '/placa.txt' para acessar o arquivo
             .then(response => response.text())
@@ -740,8 +739,8 @@ document.addEventListener("DOMContentLoaded", function () {
                             document.getElementById('carretas').value = programacao.carreta || ''; // Atualiza o valor do input
                             document.getElementById('inicio_programacao').value = programacao.datahora_inicio || ''; // Atualiza o valor do input
                             document.getElementById('final_programacao').value = programacao.datahora_fim || ''; // Atualiza o valor do input
-                            
-                            
+
+
                             final_programacao
                         });
                     });
@@ -776,7 +775,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function enviarEventoContingencia(direcao) {
-    // Coleta os dados do formulário
+        // Coleta os dados do formulário
         const selectPessoa = document.getElementById("pessoa");
         const opcao = selectPessoa.options[selectPessoa.selectedIndex];
         const pessoaNome = opcao.getAttribute("data-pessoa-nome"); // Obtém o nome da pessoa
@@ -824,61 +823,61 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify(jsonData)
         })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error('Erro ao enviar o evento');
-            }
-        })
-        .then(data => {
-            console.log('Evento enviado com sucesso:', data);
-            // Limpa os campos do formulário após o envio bem-sucedido
-            document.getElementById('cpf').value = '';
-            document.getElementById('cavalo').value = '';
-            document.getElementById('carretas').value = '';
-            document.getElementById('placa').value = '';
-            document.getElementById('pessoa').value = ''; // Limpa o select de pessoa
-            // Fecha o modal (Bootstrap) usando jQuery
-            document.getElementById('inicio_programacao').value = '';
-            document.getElementById('final_programacao').value = '';
-            $('#entradaVeiculoModal').modal('hide');
-            $('#placaModal').modal('hide');
-            
-            // Adicione aqui a limpeza de outros campos do formulário, se necessário
-            // Exemplo: document.getElementById('outroCampo').value = '';
-            // Mostra a mensagem de sucesso
-            document.getElementById('alert-success-json').innerText = 'Evento enviado com sucesso!';
-            document.getElementById('alert-success').style.display = 'block';
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error('Erro ao enviar o evento');
+                }
+            })
+            .then(data => {
+                console.log('Evento enviado com sucesso:', data);
+                // Limpa os campos do formulário após o envio bem-sucedido
+                document.getElementById('cpf').value = '';
+                document.getElementById('cavalo').value = '';
+                document.getElementById('carretas').value = '';
+                document.getElementById('placa').value = '';
+                document.getElementById('pessoa').value = ''; // Limpa o select de pessoa
+                // Fecha o modal (Bootstrap) usando jQuery
+                document.getElementById('inicio_programacao').value = '';
+                document.getElementById('final_programacao').value = '';
+                $('#entradaVeiculoModal').modal('hide');
+                $('#placaModal').modal('hide');
 
-            setTimeout(function() {
-                document.getElementById('alert-success').style.display = 'none';
-            }, 3000); // Oculta a mensagem após 3 segundos
-        })
-        .catch(error => {
-            // Fecha o modal (Bootstrap) usando jQuery em caso de erro
-            $('#entradaVeiculoModal').modal('hide');
-            $('#placaModal').modal('hide');
-            console.error('Erro ao enviar o evento:', error);
-            // Mostra a mensagem de erro
-            document.getElementById('alert-success-json').innerText = 'Erro ao enviar o evento: ' + error;
-            document.getElementById('alert-success').classList.remove('alert-success');
-            document.getElementById('alert-success').classList.add('alert-danger');
-            document.getElementById('alert-success').style.display = 'block';
+                // Adicione aqui a limpeza de outros campos do formulário, se necessário
+                // Exemplo: document.getElementById('outroCampo').value = '';
+                // Mostra a mensagem de sucesso
+                document.getElementById('alert-success-json').innerText = 'Evento enviado com sucesso!';
+                document.getElementById('alert-success').style.display = 'block';
 
-            setTimeout(function() {
-                document.getElementById('alert-success').style.display = 'none';
-                document.getElementById('alert-success').classList.remove('alert-danger');
-                document.getElementById('alert-success').classList.add('alert-success');
-            }, 3000); // Oculta a mensagem após 3 segundos
-        });
+                setTimeout(function () {
+                    document.getElementById('alert-success').style.display = 'none';
+                }, 3000); // Oculta a mensagem após 3 segundos
+            })
+            .catch(error => {
+                // Fecha o modal (Bootstrap) usando jQuery em caso de erro
+                $('#entradaVeiculoModal').modal('hide');
+                $('#placaModal').modal('hide');
+                console.error('Erro ao enviar o evento:', error);
+                // Mostra a mensagem de erro
+                document.getElementById('alert-success-json').innerText = 'Erro ao enviar o evento: ' + error;
+                document.getElementById('alert-success').classList.remove('alert-success');
+                document.getElementById('alert-success').classList.add('alert-danger');
+                document.getElementById('alert-success').style.display = 'block';
+
+                setTimeout(function () {
+                    document.getElementById('alert-success').style.display = 'none';
+                    document.getElementById('alert-success').classList.remove('alert-danger');
+                    document.getElementById('alert-success').classList.add('alert-success');
+                }, 3000); // Oculta a mensagem após 3 segundos
+            });
     }
- 
+
     // Chama a função imediatamente ao carregar a página
     atualizarFilaMotoristas();
     // Atualiza a fila a cada 3 segundos
     setInterval(atualizarFilaMotoristas, 1000);
-        // Chama a função updatePlaca a cada 3 segundos
+    // Chama a função updatePlaca a cada 3 segundos
     setInterval(updatePlaca, 1000);
     // Chama a função imediatamente ao carregar a página
     updatePlaca();

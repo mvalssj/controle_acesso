@@ -22,7 +22,7 @@
 
         <div class="apple-form" id="direcao" style="position: absolute; top: 80px; right: 20px; font-size: 12px;">
             <select id="tipo" class="apple-input" style="text-align: center;" onchange="atualizarFilaBalanca()">
-                <option value="0" selected>ENTRADA E SAÍDA</option>
+                <option value="0" selected>AMBAS AS DIREÇÕES</option>
                 <option value="1">ENTRADA DE VEÍCULOS</option>
                 <option value="2">SAÍDA DE VEÍCULOS</option>
                 <!-- <option value="3">AMBAS DIREÇÕES</option> -->
@@ -63,11 +63,11 @@
             <div class="btn-group">
                 <button type="button" class="btn btn-primary btn-lg" data-toggle="modal"
                     data-target="#filaMotoristasModal">
-                    Motoristas
+                    Fila Balança
                 </button>
                 <button type="button" id="ver_balanca" class="btn btn-secondary btn-lg" data-toggle="modal"
                     data-target="#placaModal">
-                    Balança
+                    Acesso
                 </button>
             </div>
         </div>
@@ -300,7 +300,6 @@
         }
     });
 
-
     // Adiciona um listener de evento para o campo placa
     document.getElementById('placa').addEventListener('input', function () {
         var placa = this.value;
@@ -353,47 +352,19 @@
     }
 
     function atualizarFilaBalanca() {
+        updateImagens();
         updateCPF();
         var direcao = document.getElementById('tipo').value;
+
         fetch(`/fila_balanca?direcao=${direcao}`)
             .then(response => response.json())
             .then(data => {
                 // Atualizar a interface com os dados recebidos
                 console.log(data);
             })
-            .catch(error => console.error('Erro ao atualizar a fila:', error));
-        updateCPF();
+            .catch(error => console.error('Erro ao atualizar a fila:', error));            
     }
 
-    function verificarDirecao() {
-        var direcaoSelecionada = document.getElementById('tipo').value;
-
-        fetch(`/verificar_direcao?direcao=${direcaoSelecionada}`)
-            .then(response => response.json())
-            .then(data => {
-                console.log('Data Disponivel: ', data.disponivel); // Adiciona log para depuração
-                // Verifica se a propriedade 'disponivel' está correta
-                var select = document.getElementById('tipo');
-                if (data && !data.disponivel) {
-                    alert('A direção selecionada já está em uso por outra pessoa.');
-                    document.getElementById('tipo').value = ""; // Reseta a seleção
-                } else {
-                    // Muda a posição das opções no select com base no valor de 'disponivel'
-                    if (data.disponivel === 2) {
-                        select.innerHTML = `
-                            <option value="2">SAÍDA DE VEÍCULOS</option>
-                            <option value="1">ENTRADA DE VEÍCULOS</option>
-                        `;
-                    } else if (data.disponivel === 1) {
-                        select.innerHTML = `
-                            <option value="1">ENTRADA DE VEÍCULOS</option>
-                            <option value="2">SAÍDA DE VEÍCULOS</option>
-                        `;
-                    }
-                }
-            })
-            .catch(error => console.error('Erro ao verificar a direção:', error));
-    }
     // Função para atualizar o campo CPF com o último CPF inserido
     function updateCPF() {
         var direcaoSelecionada = document.getElementById('tipo').value; // Obtém a direção selecionada
@@ -1011,12 +982,106 @@
             });
     }
 
+    function updateImagens() {
+        var direcaoSelecionada = document.getElementById('tipo').value; // Obtém a direção selecionada
+        fetch(`/fila_balanca?direcao=${direcaoSelecionada}`)
+            .then(response => response.json())
+            .then(data => {
+                if (!data) {
+                    console.error("Dados inválidos recebidos de /fila_balanca");
+                    document.getElementById('placa_frontal-img').src = '';
+                    document.getElementById('cpf').value = '';
+                    document.getElementById('alert-danger-json').innerText = 'Erro ao obter dados.';
+                    return;
+                } else {
+                    // Verifica a direção selecionada e atualiza os campos correspondentes
+                    if (direcaoSelecionada === "1" && data.direcao == "IN") {
+                        document.getElementById('direcao-truck').value = "ENTRANDO ...";
+                        document.getElementById('facial-balanca').style.display = 'block';
+                    } else if (direcaoSelecionada === "2" && data.direcao == "OUT") {
+                        document.getElementById('direcao-truck').value = "SAINDO ...";
+                        document.getElementById('facial-balanca').style.display = 'block';
+                    } else if (direcaoSelecionada === "0") {
+                        // Ambas as direções
+                        document.getElementById('direcao-truck').value = data.direcao == "OUT" ? "ENTRANDO ..." : "SAINDO ...";
+                        document.getElementById('facial-balanca').style.display = 'block';
+                    } else {
+                        // Se não corresponder a direção selecionada, não atualiza os campos
+                        return;
+                    }
+                }
+
+                document.getElementById('cpf').style.display = 'block';
+
+                // buscarProgramacao(data.cpf);
+                // atualizarProgramacoesMotorista(data.cpf);
+                console.log('######## Data ##########', data);
+
+                // Fotos das placas
+                document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
+                document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
+                document.getElementById('container_superior-img').src = 'data:image/jpeg;base64,' + data.container_superior;
+                document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
+
+                if (data.imagem_base64) {
+                    console.log('########## Entrou aqui!!!!!: ')
+                    document.getElementById('foto-img').style.display = 'block';
+                    document.getElementById('foto').style.display = 'block';
+
+                    if (document.getElementById('cavalo').value != '') {
+                        document.getElementById('placa_frontal-img').src = 'data:image/jpeg;base64,' + data.placa_frontal;
+
+                        document.getElementById('placa').style.display = 'block';
+                        document.getElementById('placa_detectada_botao').style.display = 'block';
+                        document.getElementById('new_foto_placa_frontal').style.display = 'block';
+                        document.getElementById('aprovacao_manual_placa').style.display = 'block';
+
+                    } else {
+                        // document.getElementById('placa_frontal-img').src = 'http://127.0.0.1/static/images/load.gif';
+                        document.getElementById('placa').style.display = 'block';
+                        document.getElementById('placa_detectada_botao').style.display = 'block';
+                        document.getElementById('new_foto_placa_frontal').style.display = 'block';
+                        document.getElementById('aprovacao_manual_placa').style.display = 'block';
+
+                    }
+                    // document.getElementById('alert-success').style.display = 'block';
+                    // document.getElementById('placa_frontal_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_frontal_balanca;
+                    // document.getElementById('container_superior-img').src = 'data:image/jpeg;base64,' + data.container_superior;
+                    // document.getElementById('placa_traseira_balanca-img').src = 'data:image/jpeg;base64,' + data.placa_traseira_balanca;
+                } else {
+                    document.getElementById('foto-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_frontal-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_frontal_balanca-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('container_superior-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_frontal_balanca-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_traseira_balanca-img').src = 'static\\images\\sem_foto.jpg';
+                    document.getElementById('placa_detectada_botao').style.display = 'block';
+                    document.getElementById('placa').style.display = 'block';
+
+                    document.getElementById('aprovacao_manual_placa').style.display = 'block';
+                    document.getElementById('new_foto_placa_frontal').style.display = 'block';
+
+                    console.warn("Nenhuma imagem em base64 encontrada.");
+                }
+
+                if (data.mensagem) {
+                    document.getElementById('alert-success-json').innerText = data.mensagem;
+                    document.getElementById('alert-success-json').innerText = 'Programação encontrada! Liberado(a).';
+                }
+
+            })
+            .catch(error => {
+                console.error('Erro ao atualizar CPF:', error);
+                document.getElementById('cpf').value = '';
+                document.getElementById('alert-danger-json').innerText = 'Erro na conexão. Verifique sua internet.';
+            });
+    }    
     // Chama a função imediatamente ao carregar a página
     atualizarFilaMotoristas();
     // Atualiza a fila a cada 3 segundos
-    setInterval(atualizarFilaMotoristas, 1000);
+    setInterval(atualizarFilaMotoristas, 3000);
     // Chama a função updatePlaca a cada 3 segundos
-    setInterval(updatePlaca, 1000);
+    setInterval(updatePlaca, 2000);
     // Chama a função imediatamente ao carregar a página
     updatePlaca();
     // Chama a função updatePlacaBalanca a cada 3 segundos
@@ -1024,7 +1089,7 @@
     // Chama a função imediatamente ao carregar a página
     updatePlacaBalanca();
     // Chama a função updateCPF a cada 5 segundos
-    // setInterval(updateCPF, 1000);
+    setInterval(updateImagens, 4000);
     // Chama a função imediatamente ao carregar a página
     updateCPF();
 

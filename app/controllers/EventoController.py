@@ -117,7 +117,7 @@ class EventoController:
         @self.blueprint.route('/webhook/evento', methods=['POST'])
         @csrf.exempt  # Usa a instância csrf para desabilitar CSRF nessa rota
         def novo_evento():
-            
+            print('Entrou em inserir evento!!!')
             # Captura o ip das biometrias            
             ips_entrada, ips_saida = self.equipamento_controller.get_equipamento_id(unidade)
             # Itera sobre os IPs de entrada e saída
@@ -192,7 +192,7 @@ class EventoController:
                         ## pega a foto do cadastro
                         url = f"http://{device_ip_in}/cgi-bin/AccessFace.cgi?action=list&UserIDList[0]={data.get('UserID')}"
                         digest_auth = requests.auth.HTTPDigestAuth(username, password)
-                        rval = requests.get(url, auth=digest_auth, stream=True, timeout=20, verify=False)                
+                        rval = requests.get(url, auth=digest_auth, stream=True, timeout=10, verify=False)                
                         foto = rval.text           
                         # Extrair a string da resposta
                         response_text = foto
@@ -231,7 +231,7 @@ class EventoController:
                         # Consulta para armazenar o resultado
                             fila = Evento.query.filter(Evento.pos_fila != '').order_by(Evento.pos_fila.desc()).first()  # Armazena o último pos_fila
                             fila = 0 if fila is None else fila  # Se fila for None, pos_fila será 0
-                            print('############# Fila: ',fila.pos_fila)
+                            # print('############# Fila: ',fila.pos_fila)
                             pos_fila = 0
                             pos_fila = fila.pos_fila + 1
                         # Verifica se o veiculo deverá ser pesado     
@@ -260,7 +260,7 @@ class EventoController:
                                 cavalo = response_data.get("programacao", {}).get("cavalo")
                                 print('Placa Cavalo: ',cavalo)    
                                 if cavalo != '':
-                                    print('##### Pegando Placa #####')
+                                    # print('##### Pegando Placa #####')
                                     subprocess.call(["python", "app\\services\\lpr\\lpr.py"])
                                 ### Paga a placa Frontal ###
 
@@ -352,7 +352,7 @@ class EventoController:
                                 pesar = "Y"
                                 fila = Evento.query.filter(Evento.pos_fila != '').order_by(Evento.pos_fila.desc()).first()  # Armazena o último pos_fila
                                 fila = 0 if fila is None else fila  # Se fila for None, pos_fila será 0
-                                print('############# Fila: ',fila.pos_fila)
+                                # print('############# Fila: ',fila.pos_fila)
                                 pos_fila = 0
                                 pos_fila = fila.pos_fila + 1
                             # Verifica se o veiculo deverá ser pesado    
@@ -468,10 +468,10 @@ class EventoController:
 
                         # print('Evento enviado com sucesso!')          
                     except Exception as e:
-                        # print(f"Erro ao inserir evento ####Corrigir####: {e}")
-                        print('Dentro do Erro: ###### IP Entrada: ######', device_ip_in)
-                        print('Dentro do Erro: ###### IP Saída: ######', device_ip_out)
-                        traceback.print_exc()  # Imprime a stack trace completa do erro
+                        print(f"Erro ao inserir evento ####Corrigir####: {e}")
+                        # print('Dentro do Erro: ###### IP Entrada: ######', device_ip_in)
+                        # print('Dentro do Erro: ###### IP Saída: ######', device_ip_out)
+                        # traceback.print_exc()  # Imprime a stack trace completa do erro
 
             return jsonify({"status": "success", "message": "Evento inserido com sucesso"}), 200 
                         
@@ -484,8 +484,8 @@ class EventoController:
             ips_entrada, ips_saida = self.equipamento_controller.get_equipamento_id(unidade)
             for ip_entrada in ips_entrada:
                 for ip_saida in ips_saida:
-                    print('IP Entrada:', ip_entrada)
-                    print('IP Saída:', ip_saida)
+                    # print('IP Entrada:', ip_entrada)
+                    # print('IP Saída:', ip_saida)
                     device_ip_in = ip_entrada
                     device_ip_out = ip_saida                        
                     # Captura o ip das biometrias
@@ -508,7 +508,7 @@ class EventoController:
                     nome = data['CardName']  # Mantém o nome recebido do JSON
                     id_evento = data['IdEvento']
 
-                    print('###### direção:',direcao)
+                    # print('###### direção:',direcao)
 
                     if direcao != "IN":
                         current_device_ip = device_ip_in
@@ -523,7 +523,7 @@ class EventoController:
                         url_equipamento = f"http://{current_device_ip}/cgi-bin/AccessCard.cgi?action=list&CardNoList[0]={cpf}"
 
                         digest_auth = requests.auth.HTTPDigestAuth(username, password)
-                        rval = requests.get(url_equipamento, auth=digest_auth, stream=True, timeout=20, verify=False)
+                        rval = requests.get(url_equipamento, auth=digest_auth, stream=True, timeout=10, verify=False)
                         # Pegar ID da pessoa no equipamento          
                         try:
                             # Use regex para encontrar o UserID na resposta de texto
@@ -543,7 +543,7 @@ class EventoController:
 
                         url_foto = f"http://{current_device_ip}/cgi-bin/AccessFace.cgi?action=list&UserIDList[0]={id_user}"
 
-                        rval = requests.get(url_foto, auth=digest_auth, stream=True, timeout=20, verify=False)
+                        rval = requests.get(url_foto, auth=digest_auth, stream=True, timeout=10, verify=False)
                         foto = rval.text
                         
                         # Extrair a string da resposta
@@ -734,7 +734,7 @@ class EventoController:
             direcao = request.args.get('direcao')  # Obtém a direção da requisição
             verificar_direcao(direcao)
 
-            print('DIRECAO: ##########',direcao)
+            # print('DIRECAO: ##########',direcao)
             # Carrega as imagens base64
             with open("app\\services\\lpr\\images\\live.jpg", "rb") as image_file:
                 placa_frontal_entrada_base64 = base64.b64encode(image_file.read()).decode('utf-8')
@@ -805,13 +805,13 @@ class EventoController:
                         else:
                             mensagem = ""
 
-                        print('###Eventos:',eventos)
+                        # print('###Eventos:',eventos)
                         if ultimo_evento.direcao == "OUT":
                             current_device_ip = device_ip_out
-                            print('####### IP de Saida: ',current_device_ip)
+                            # print('####### IP de Saida: ',current_device_ip)
                         else:
                             current_device_ip = device_ip_in
-                            print('####### IP de Entrada: ',current_device_ip)
+                            # print('####### IP de Entrada: ',current_device_ip)
 
                         url_imagem = f"http://{current_device_ip}/cgi-bin/FileManager.cgi?action=downloadFile&fileName={ultimo_evento.imagem_path}"
 
@@ -1073,7 +1073,7 @@ class EventoController:
         # Atualiza com a placa do lpr ou manual   
         def capturar_placa(self, cpf):
 
-            print('#### Entrou no Captura Placa ####')
+            # print('#### Entrou no Captura Placa ####')
             try:
                 # Encontra o último evento com o CPF fornecido
                 ultimo_evento = Evento.query.filter_by(cpf=cpf).order_by(Evento.id.desc()).first()
@@ -1105,7 +1105,10 @@ class EventoController:
 
         @self.blueprint.route('/checa_placas', methods=['GET', 'POST'])
         def checa_placas():
-            tipo = request.args.get('tipo')  # Obtém o parâmetro 'tipo' da requisição
+            # Obtém o tipo de verificação (1 ou 2) da requisição
+            tipo = request.args.get('tipo')
+
+            # Define os cabeçalhos para a requisição HTTP
             headers = {
                 'Content-Type': 'application/json',
                 'Postman-Token': '<calculated when request is sent>',
@@ -1116,136 +1119,167 @@ class EventoController:
             }
 
             try:
-                response_data = app.serve_placa_balanca().json
+                # Obtém os dados da placa da balança através da função serve_placa_balanca()
+                response_data_placa = app.serve_placa_balanca().json
 
-                placa_frontal = response_data.get("placa_frontal", "N/A")
-                placa_traseira = response_data.get("placa_traseira", "N/A")
+                # Extrai as placas frontal e traseira dos dados recebidos
+                placa_frontal = response_data_placa.get("placa_frontal", "N/A")
+                placa_traseira = response_data_placa.get("placa_traseira", "N/A")
 
-                # Função para obter eventos com base na direção
+                # Função para obter eventos de entrada e saída
                 def obter_eventos_por_direcao():
+                    # Retorna um dicionário com listas de eventos de entrada e saída
                     eventos_resultados = {
                         "entrada": Evento.query.filter(Evento.direcao == 'IN', Evento.pesar == 'Y', Evento.pos_fila != '').order_by(Evento.pos_fila.desc()).all(),
                         "saida": Evento.query.filter(Evento.direcao == 'OUT', Evento.pesar == 'Y', Evento.pos_fila != '').order_by(Evento.pos_fila.desc()).all()
                     }
                     return eventos_resultados
 
-                eventos = obter_eventos_por_direcao()  # Chama a função
+                # Chama a função para obter os eventos
+                eventos = obter_eventos_por_direcao()
 
-                resultados = []  # Para armazenar os resultados de entrada e saída
+                # Lista para armazenar os resultados da checagem das placas
+                resultados = []
 
-                # Iteração para as listas de entrada e saída
+                # Itera sobre as listas de eventos de entrada e saída
                 for direcao_nome, eventos_lista in eventos.items():
                     for ultimo_evento in eventos_lista:
+                        # Extrai informações do último evento
                         pessoa = ultimo_evento.pessoa
                         evento_id = ultimo_evento.id
                         cpf_primeiro_da_fila = ultimo_evento.cpf
 
+                        # Se o CPF não estiver disponível, pula para o próximo evento
                         if not cpf_primeiro_da_fila:
-                            continue  # Pula para o próximo evento se o CPF não estiver disponível
+                            continue
 
                         try:
+                            # Faz uma requisição POST para obter a programação do CPF
                             response_programacao = requests.post(
                                 url_for('programacao.buscar_programacao_por_cpf', _external=True),
                                 headers=headers,
                                 json={'cpf': cpf_primeiro_da_fila}
                             )
+                            # Verifica se a requisição foi bem sucedida
                             response_programacao.raise_for_status()
-                            response_data = response_programacao.json()
+                            # Converte a resposta para um dicionário JSON
+                            response_data_programacao = response_programacao.json()
 
-                            programacao = response_data.get("programacao", {})
-                            if not programacao:
-                                continue  # Pula para o próximo evento se não houver programação
-
-                            carreta_programacao = programacao.get("carreta")
-                            cavalo_programacao = programacao.get("cavalo")
-                            pessoa_programacao = programacao.get("pessoa")
-                            cpf_programacao = programacao.get("cpf")
-
-                            status_pessoa = "ok" if cpf_programacao == cpf_primeiro_da_fila else "nok"
-                            status_frontal = "ok" if cavalo_programacao == placa_frontal else "nok"
-                            status_traseira = "ok" if carreta_programacao == placa_traseira else "nok"
-                            status_geral = "ok" if status_frontal == "ok" and status_traseira == "ok" and status_pessoa == "ok" else "nok"
-
-                            # Se tiver Ok tudo ok
-                            if status_geral == "ok":
-                                try:
-                                    with open('app\\services\\lpr\\placa_frontal_balanca.txt', 'w') as f:
-                                        f.write("N/A")
-                                    with open('app\\services\\lpr\\placa_traseira_balanca.txt', 'w') as f:
-                                        f.write("N/A")
-
-                                    imagem_branca = Image.new("RGB", (1280, 720), "white")
-                                    imagem_branca.save('app\\services\\lpr\\images\\placa_frontal.jpg')
-                                    imagem_branca.save('app\\services\\lpr\\images\\placa_traseira.jpg')
-
-                                    lpr = 'N' if tipo == '1' else 'Y'
-
-                                    ultimo_evento.lpr = lpr
-                                    ultimo_evento.pesar = "N"
-                                    ultimo_evento.placa_1 = placa_frontal
-                                    ultimo_evento.placa_2 = placa_traseira
-                                    ultimo_evento.pos_fila = None
-
-                                    db.session.commit()
-                                except Exception as e:
-                                    print(f"Erro ao atualizar o evento: {e}")
-                                    return jsonify({"error": "Erro ao atualizar o evento."}), 500
-
-                            novo_check = ProgramacaoCheck(
-                                evento_id=evento_id,
-                                traseira_progrmacao=carreta_programacao,
-                                frontal_programacao=cavalo_programacao,
-                                pessoa_programacao=pessoa_programacao,
-                                cpf_programacao=cpf_programacao,
-                                frontal_detectada=placa_frontal,
-                                traseira_detectada=placa_traseira,
-                                pessoa_detectada=pessoa,
-                                cpf_detectado=cpf_primeiro_da_fila,
-                                frontal_corrigida='',
-                                traseira_corrigida='',
-                                pessoa_corrigida='',
-                                cpf_corrigido='',
-                                frontal_status=status_frontal,
-                                traseira_status=status_traseira,
-                                pessoa_status=status_pessoa,
-                                cpf_status=status_pessoa,
-                                geral_status=status_geral
-                            )
-
-                            existing_check = ProgramacaoCheck.query.filter_by(evento_id=evento_id).first()
-
-                            if existing_check is None:
-                                db.session.add(novo_check)
-                                db.session.commit()
+                            # Verifica se a resposta contém uma lista de programações ou apenas uma
+                            if isinstance(response_data_programacao.get("programacao"), list):
+                                programacoes = response_data_programacao.get("programacao")
                             else:
-                                if status_frontal == "ok":
-                                    existing_check.frontal_corrigida = placa_frontal
-                                if status_traseira == "ok":
-                                    existing_check.traseira_corrigida = placa_traseira
-                                if status_pessoa == "ok":
-                                    existing_check.pessoa_corrigida = pessoa
-                                    existing_check.cpf_corrigido = cpf_primeiro_da_fila
+                                programacoes = [response_data_programacao.get("programacao")]
 
-                                existing_check.frontal_detectada = placa_frontal
-                                existing_check.traseira_detectada = placa_traseira
-                                existing_check.geral_status = status_geral
-                                db.session.commit()
+                            # Itera sobre todas as programações encontradas para o CPF
+                            for programacao in programacoes:
+                                # Pula para a próxima programação se não houver dados
+                                if not programacao:
+                                    continue
 
-                            resultados.append({
-                                "direcao": direcao_nome,
-                                "placa_frontal": placa_frontal,
-                                "placa_traseira": placa_traseira,
-                                "pessoa": pessoa,
-                                "cpf_primeiro_da_fila": cpf_primeiro_da_fila,
-                                "pessoa_programacao": pessoa_programacao,
-                                "cpf_programacao": cpf_programacao,
-                                "carreta_programacao": carreta_programacao,
-                                "cavalo_programacao": cavalo_programacao,
-                                "status_frontal": status_frontal,
-                                "status_traseira": status_traseira,
-                                "status_pessoa": status_pessoa,
-                                "status_geral": status_geral
-                            })
+                                # Extrai informações da programação
+                                carreta_programacao = programacao.get("carreta")
+                                cavalo_programacao = programacao.get("cavalo")
+                                pessoa_programacao = programacao.get("pessoa")
+                                cpf_programacao = programacao.get("cpf")
+
+                                # Define o status de cada item (pessoa, placa frontal, placa traseira)
+                                status_pessoa = "ok" if cpf_programacao == cpf_primeiro_da_fila else "nok"
+                                status_frontal = "ok" if cavalo_programacao == placa_frontal else "nok"
+                                status_traseira = "ok" if carreta_programacao == placa_traseira else "nok"
+                                # Define o status geral baseado nos status individuais
+                                status_geral = "ok" if status_frontal == "ok" and status_traseira == "ok" and status_pessoa == "ok" else "nok"
+
+                                # Se o status geral for "ok", atualiza o evento e salva as alterações no banco de dados
+                                if status_geral == "ok":
+                                    try:
+                                        # Limpa os arquivos de placas da balança
+                                        with open('app\\services\\lpr\\placa_frontal_balanca.txt', 'w') as f:
+                                            f.write("N/A")
+                                        with open('app\\services\\lpr\\placa_traseira_balanca.txt', 'w') as f:
+                                            f.write("N/A")
+
+                                        # Cria imagens brancas para as placas
+                                        imagem_branca = Image.new("RGB", (1280, 720), "white")
+                                        imagem_branca.save('app\\services\\lpr\\images\\placa_frontal.jpg')
+                                        imagem_branca.save('app\\services\\lpr\\images\\placa_traseira.jpg')
+
+                                        # Define o valor de lpr baseado no tipo de verificação
+                                        lpr = 'N' if tipo == '1' else 'Y'
+
+                                        # Atualiza o evento
+                                        ultimo_evento.lpr = lpr
+                                        ultimo_evento.pesar = "N"
+                                        ultimo_evento.placa_1 = placa_frontal
+                                        ultimo_evento.placa_2 = placa_traseira
+                                        ultimo_evento.pos_fila = None
+
+                                        # Salva as alterações no banco de dados
+                                        db.session.commit()
+                                    except Exception as e:
+                                        print(f"Erro ao atualizar o evento: {e}")
+                                        return jsonify({"error": "Erro ao atualizar o evento."}), 500
+
+                                # Cria um novo objeto ProgramacaoCheck
+                                novo_check = ProgramacaoCheck(
+                                    evento_id=evento_id,
+                                    traseira_progrmacao=carreta_programacao,
+                                    frontal_programacao=cavalo_programacao,
+                                    pessoa_programacao=pessoa_programacao,
+                                    cpf_programacao=cpf_programacao,
+                                    frontal_detectada=placa_frontal,
+                                    traseira_detectada=placa_traseira,
+                                    pessoa_detectada=pessoa,
+                                    cpf_detectado=cpf_primeiro_da_fila,
+                                    frontal_corrigida='',
+                                    traseira_corrigida='',
+                                    pessoa_corrigida='',
+                                    cpf_corrigido='',
+                                    frontal_status=status_frontal,
+                                    traseira_status=status_traseira,
+                                    pessoa_status=status_pessoa,
+                                    cpf_status=status_pessoa,
+                                    geral_status=status_geral
+                                )
+
+                                # Verifica se já existe um registro para este evento_id
+                                existing_check = ProgramacaoCheck.query.filter_by(evento_id=evento_id).first()
+
+                                # Se não existir, adiciona o novo registro
+                                if existing_check is None:
+                                    db.session.add(novo_check)
+                                    db.session.commit()
+                                # Se existir, atualiza o registro existente
+                                else:
+                                    if status_frontal == "ok":
+                                        existing_check.frontal_corrigida = placa_frontal
+                                    if status_traseira == "ok":
+                                        existing_check.traseira_corrigida = placa_traseira
+                                    if status_pessoa == "ok":
+                                        existing_check.pessoa_corrigida = pessoa
+                                        existing_check.cpf_corrigido = cpf_primeiro_da_fila
+
+                                    existing_check.frontal_detectada = placa_frontal
+                                    existing_check.traseira_detectada = placa_traseira
+                                    existing_check.geral_status = status_geral
+                                    db.session.commit()
+
+                                # Adiciona os resultados à lista de resultados
+                                resultados.append({
+                                    "direcao": direcao_nome,
+                                    "placa_frontal": placa_frontal,
+                                    "placa_traseira": placa_traseira,
+                                    "pessoa": pessoa,
+                                    "cpf_primeiro_da_fila": cpf_primeiro_da_fila,
+                                    "pessoa_programacao": pessoa_programacao,
+                                    "cpf_programacao": cpf_programacao,
+                                    "carreta_programacao": carreta_programacao,
+                                    "cavalo_programacao": cavalo_programacao,
+                                    "status_frontal": status_frontal,
+                                    "status_traseira": status_traseira,
+                                    "status_pessoa": status_pessoa,
+                                    "status_geral": status_geral
+                                })
 
                         except requests.exceptions.HTTPError as e:
                             print(f"Erro HTTP ao buscar programação: {e}")
@@ -1254,16 +1288,17 @@ class EventoController:
                             print(f"Erro ao buscar programação por CPF: {e}")
                             continue
 
+                # Retorna os resultados como JSON
                 return jsonify(resultados)
 
             except Exception as e:
                 print(f"Erro ao obter as placas: {e}")
                 return jsonify({"error": "Erro ao obter as placas."}), 500
-
+            
         @self.blueprint.route('/verificar_direcao', methods=['GET'])
         def verificar_direcao(direcao = 0):
             direcao = request.args.get('direcao')   
-            print('DIREÇÃO DISPONIVEL: ',direcao)         
+            # print('DIREÇÃO DISPONIVEL: ',direcao)         
             # Verifica se a direção está em uso
             if direcao == "1":  # Direção "ENTRADA DE VEÍCULOS"
                 evento_ativo = Evento.query.filter(Evento.direcao == "OUT").first()
@@ -1325,7 +1360,7 @@ class EventoController:
             try:
                 # Obtém o evento a ser atualizado
                 evento = Evento.query.get_or_404(id)
-                print('######Fila: ',id)
+                # print('######Fila: ',id)
                 # Busca eventos com pos_fila diferente de None
                 eventos_na_fila = Evento.query.filter(Evento.pos_fila != None).all()
 
@@ -1335,7 +1370,7 @@ class EventoController:
                 else:
                     # Encontra a maior posição na fila
                     maior_pos_fila = max(evento.pos_fila for evento in eventos_na_fila)
-                    print('######Fila: ',maior_pos_fila)
+                    # print('######Fila: ',maior_pos_fila)
                     # Atualiza a posição do evento para o próximo valor disponível
                     evento.pos_fila = maior_pos_fila + 1
 

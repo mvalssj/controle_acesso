@@ -4,6 +4,10 @@ import time
 import os
 import sys
 import threading
+import app
+from flask_injector import inject
+from app.controllers import EventoController
+
 
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
 # from config import device_ip_in, device_ip_out, device_ip_in_truck, device_ip_out_truck, device_ip_out_car, device_ip_in_car, username, password
@@ -14,10 +18,11 @@ class EventRecorder:
         self.username = username
         self.password = password
         self.direction = direction
+        self.evento_controller = app.equipamento_controller # Recebe a instância injetada
 
     def fetch_records(self):
         end_time = int(datetime.now().timestamp())
-        start_time = int((datetime.now() - timedelta(hours=2.1)).timestamp())
+        start_time = int((datetime.now() - timedelta(hours=0.10)).timestamp())
         url = f"http://{self.device_ip_in}/cgi-bin/recordFinder.cgi?action=find&name=AccessControlCardRec&StartTime={start_time}&EndTime={end_time}"
         digest_auth = requests.auth.HTTPDigestAuth(self.username, self.password)
         rval = requests.get(url, auth=digest_auth)
@@ -59,18 +64,19 @@ class EventRecorder:
             response = requests.post(
                 'http://127.0.0.1/webhook/evento',
                 json=record,  # Envia o record como JSON
-                timeout=10
+                timeout=20
             )
             if response.status_code == 200:
                 sucesso = 1
-                # time.sleep(5)
             else:
                 print(f"Falha ao enviar o registro: {response.status_code}")
+                self.send_record(record)
                 # Tenta reenviar o registro atual e os subsequentes em caso de falha
                 # self.send_records(lines[i:]) 
                 # return # Sai da função após tentar reenviar
         except requests.RequestException as e:
             print(f"Erro ao enviar o registro: {e}")
+            self.send_record(record)
             # Tenta reenviar o registro atual e os subsequentes em caso de erro
             # self.send_records(lines[i:])
             # return # Sai da função após tentar reenviar
@@ -82,4 +88,4 @@ class EventRecorder:
             lines = self.fetch_records()
             print("Aguardando Biometria...", self.device_ip_in)
             self.send_records(lines)
-            time.sleep(2)
+            time.sleep(1)

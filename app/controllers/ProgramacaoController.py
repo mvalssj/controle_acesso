@@ -364,6 +364,41 @@ class ProgramacaoController:
             else:
                 return jsonify({'status': 'error', 'message': 'Nenhuma programação ativa no intervalo de tempo atual.'}), 404
 
+        # Rota para buscar programação por CPF
+        @self.blueprint.route('/programacoes/cpf/varias', methods=['POST'])
+        @csrf.exempt  # Usa a instância csrf para desabilitar CSRF nessa rota
+        def buscar_varias_programacoes_por_cpf():
+            # Obtém o CPF enviado via JSON
+            data = request.get_json()
+            cpf = data.get('cpf')
+
+            # Busca as programações no banco de dados que correspondem ao CPF
+            programacoes = Programacao.query.filter_by(cpf=cpf).all()
+
+            # Cria uma lista para armazenar as programações válidas
+            programacoes_validas = []
+
+            # Itera sobre as programações encontradas
+            for programacao in programacoes:
+                # Verifica se a programação está dentro do intervalo de tempo atual
+                agora = datetime.now()
+                if programacao.datahora_inicio <= agora <= programacao.datahora_fim:
+                    # Adiciona a programação à lista de programações válidas
+                    programacoes_validas.append({
+                        'id': programacao.id,
+                        'pessoa': programacao.pessoa,
+                        'cpf': programacao.cpf,
+                        'cavalo': programacao.cavalo,
+                        'carreta': programacao.carreta,
+                        'datahora_inicio': programacao.datahora_inicio.strftime('%Y-%m-%dT%H:%M'),
+                        'datahora_fim': programacao.datahora_fim.strftime('%Y-%m-%dT%H:%M'),
+                    })
+
+                    print('Programações validas: ',programacoes_validas)
+
+            # Retorna as programações válidas como JSON
+            return jsonify({'status': 'success', 'programacoes': programacoes_validas})
+
         # Rota para buscar informação no equipamento por CPF
         @self.blueprint.route('/buscar/equipamento', methods=['POST'])
         @csrf.exempt  # Usa a instância csrf para desabilitar CSRF nessa rota
@@ -461,7 +496,7 @@ class ProgramacaoController:
 
             # Processa cada dispositivo uma única vez 
             for device_ip in dispositivos:
-                print('IP do dispositivo:', device_ip)
+                # print('IP do dispositivo:', device_ip)
                 current_device_ip = device_ip
                 current_base_url = f"http://{current_device_ip}/cgi-bin/AccessUser.cgi"
 
@@ -489,7 +524,7 @@ class ProgramacaoController:
                     if match:
                         user_id = match.group(1)
 
-                    print('UserID:', user_id)
+                    # print('UserID:', user_id)
                     if user_id != None:
                         id_user = user_id
                     # verifica se o já está na controladora
@@ -518,7 +553,7 @@ class ProgramacaoController:
 
                 # if status_code == 200:
                 if True:
-                    print('ENTROU PARA CADASTRAR CPF: ###########################',id_user)
+                    # print('ENTROU PARA CADASTRAR CPF: ###########################',id_user)
                     # Cadastra o CPF ou CardNo
                     card_data = {
                         "CardList": [{
@@ -533,7 +568,7 @@ class ProgramacaoController:
                     card_api = UserAPI(card_url, username, password)
                     card_status_code, card_response_content = card_api.send_user("insertMulti", card_data)
                     
-                    print(card_response_content);
+                    # print(card_response_content);
 
                     if card_status_code == 200:
                         # Processa a foto da biometria

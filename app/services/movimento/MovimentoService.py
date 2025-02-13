@@ -55,11 +55,12 @@ class Movimento:
         contagem_entrada = 0
         contagem_saida = 0
         primeira_deteccao = True  # Flag para a primeira detecção
+        
 
         while True:
             ret, frame = self.cap.read()
             if not ret:
-                print("Erro ao ler o frame.")
+                # print("Erro ao ler o frame.")
                 break
 
             cv2.rectangle(frame, (self.x1, self.y1), (self.x2, self.y2), (0, 0, 255), 2)
@@ -138,7 +139,8 @@ class Movimento:
                 contagem_saida = 0
 
             if movimento_detectado:
-                print("Movimento detectado!")
+                movimento = 1
+                # print("Movimento detectado!")
             # else:
             #     print("Sem movimento")
 
@@ -177,16 +179,18 @@ class Movimento:
                     imagem_branca.save('app\\services\\lpr\\images\\placa_frontal.jpg')
                     imagem_branca.save('app\\services\\lpr\\images\\placa_traseira.jpg')
 
-                print('Resposta do request /checa_placas:', resposta.text)
-                print("###### Request /checa_placas executado com sucesso ######")
+                # print('Resposta do request /checa_placas:', resposta.text)
+                # print("###### Request /checa_placas executado com sucesso ######")
                 return "Novas fotos das placas da balança capturadas e processadas com sucesso! Request /checa_placas executado.", 200
 
             except requests.exceptions.RequestException as e:
-                print(f"Erro ao executar o request /checa_placas: {e}")
-                return "Erro ao executar o request /checa_placas após capturar as fotos.", 500
+                erro = 1
+                # print(f"Erro ao executar o request /checa_placas: {e}")
+                # return "Erro ao executar o request /checa_placas após capturar as fotos.", 500
 
         except Exception as e:
-            print(f"Erro ao executar o subprocesso: {e}")
+            erro = 1
+            # print(f"Erro ao executar o subprocesso: {e}")
 
 # Exemplo de uso:
 camera_url = f"rtsp://{username}:{password}@{camera}:554/cam/realmonitor?channel=1&subtype=0"

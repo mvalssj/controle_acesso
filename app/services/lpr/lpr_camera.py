@@ -51,12 +51,14 @@ def save_image_from_url(url, filepath, username, password):
 
         with open(filepath, 'wb') as out_file:
             for chunk in response.iter_content(chunk_size=8192):
-                out_file.write(chunk)
-        print(f"Imagem salva com sucesso em: {filepath}")
+                out_file.write(chunk)        
+        # print(f"Imagem salva com sucesso em: {filepath}")
     except requests.exceptions.RequestException as e:
-        print(f"Erro ao baixar a imagem: {e}")
+        # print(f"Erro ao baixar a imagem: {e}")
+        erro = 1
     except Exception as e:
-        print(f"Erro ao salvar a imagem: {e}")
+        erro = 1
+        # print(f"Erro ao salvar a imagem: {e}")
 
 
 def crop_image(input_path, output_path, top_crop_cm, left_crop_cm, right_crop_cm, dpi):
@@ -71,11 +73,13 @@ def crop_image(input_path, output_path, top_crop_cm, left_crop_cm, right_crop_cm
         right_crop_pixels = int(right_crop_cm * pixels_per_cm)
         cropped_img = img.crop((left_crop_pixels, 0, width - right_crop_pixels, top_crop_pixels)) #Modificação aqui
         cropped_img.save(output_path)
-        print(f"Imagem recortada salva com sucesso em: {output_path}")
+        # print(f"Imagem recortada salva com sucesso em: {output_path}")
     except FileNotFoundError:
-        print(f"Erro: Arquivo de imagem não encontrado: {input_path}")
+        erro = 1
+        # print(f"Erro: Arquivo de imagem não encontrado: {input_path}")
     except Exception as e:
-        print(f"Erro ao recortar a imagem: {e}")
+        erro = 1
+        # print(f"Erro ao recortar a imagem: {e}")
 
 if len(sys.argv) > 1:
     if tipo_placa == "balanca_frontal":
@@ -103,12 +107,15 @@ if __name__ == "__main__":
     image_path2 = os.path.join(base_path, placa)
     crop_image(image_path1, image_path2, 0.3, 2.14, 13.1, dpi)
     try:
-        print('File Placa: ',file_placa)
+        # print('File Placa: ',file_placa)
         subprocess.run(["python", "app\\services\\lpr\\api_lpr_offline.py", foto_placa, file_placa])
-        print("Subprocesso executado com sucesso.")
+        # print("Subprocesso executado com sucesso.")
     except subprocess.CalledProcessError as e:
-        print(f"Erro ao executar o subprocesso: Retorno {e.returncode}, Saída de erro: {e.stderr.decode()}")
+        erro = 1
+        # print(f"Erro ao executar o subprocesso: Retorno {e.returncode}, Saída de erro: {e.stderr.decode()}")
     except FileNotFoundError:
-        print(f"Erro: Arquivo 'api_lpr_offline.py' não encontrado.")
+        erro = 1
+        # print(f"Erro: Arquivo 'api_lpr_offline.py' não encontrado.")
     except Exception as e:
-        print(f"Erro inesperado ao executar o subprocesso: {e}")
+        erro = 1
+        # print(f"Erro inesperado ao executar o subprocesso: {e}")

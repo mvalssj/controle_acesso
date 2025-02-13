@@ -1,65 +1,83 @@
-from app import app
-from app.services.antipassback.EventoSevice import EventRecorder
-from app.controllers.EquipamentoController import EquipamentoController # Importe o controlador
-from threading import Thread
+import builtins  # Para manipular o print original
+import logging
 import os
 import sys
 import time
 import subprocess
 from multiprocessing import Process
-import logging
+from threading import Thread
 
-# Adiciona o caminho do diretório pai ao PATH do sistema, permitindo importar módulos de outros diretórios
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
-
+from app import app
+from app.controllers.EquipamentoController import EquipamentoController
+from app.helpers.task_manager import ProcessMonitor
+from app.services.antipassback.EventoSevice import EventRecorder
 from config import unidade, username, password
 
-# Configura o logging para melhor monitoramento
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def run_event_recorder(recorder, thread_name):
-    """
-    Função para executar o EventRecorder em uma thread separada.
-    Esta função encapsula a execução do EventRecorder, tratando possíveis exceções.
-    """
+# 1) Guardar o print original
+original_print = builtins.print
+
+# 2) Criar uma função "no_print" que não faz nada
+def no_print(*args, **kwargs):
+    pass
+
+# 3) Redirecionar o print global para no_print
+builtins.print = no_print
+
+# =================================================================
+# Configuração de LOG apenas em arquivo
+# =================================================================
+
+log_file = os.path.join(os.path.dirname(__file__), 'app.log')
+
+root_logger = logging.getLogger()
+root_logger.handlers.clear()
+
+file_handler = logging.FileHandler(log_file, mode='a')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(filename)s - %(lineno)d - %(message)s')
+file_handler.setFormatter(formatter)
+
+root_logger.addHandler(file_handler)
+root_logger.setLevel(logging.DEBUG)
+
+logging.getLogger('werkzeug').disabled = True
+if hasattr(app, 'logger'):
+    app.logger.disabled = True
+
+# =================================================================
+# Funções
+# =================================================================
+
+def run_event_recorder_process(ip, username, password, tipo, process_name):
     try:
-        logging.info(f"Iniciando thread {thread_name}")
-        recorder.run()  # Executa o método run() do objeto EventRecorder
-        logging.info(f"Thread {thread_name} encerrada.")
+        logging.info(f"Iniciando processo {process_name}")
+        recorder = EventRecorder(ip, username, password, tipo)
+        recorder.run()
+        logging.info(f"Processo {process_name} encerrado.")
     except Exception as e:
-        logging.exception(f"Erro na thread {thread_name}: {e}")  # Imprime qualquer erro ocorrido durante a execução
+        logging.exception(f"Erro no processo {process_name}: {e}")
 
-def restart_thread(thread, recorder, thread_name):
-    """
-    Função para reiniciar uma única thread.
-    Cria uma nova thread para executar o EventRecorder, substituindo a thread anterior se necessário.
-    """
-    logging.info(f"Reiniciando thread {thread_name}...")
-    if thread and thread.is_alive():
-        logging.warning(f"Thread {thread_name} ainda está ativa. Tentando juntar...")
-        thread.join() # Tenta esperar a thread terminar antes de criar uma nova.
-    new_thread = Thread(target=run_event_recorder, args=(recorder, thread_name), daemon=True)
-    new_thread.start()  # Inicia a nova thread
-    return new_thread
+def restart_process(process_name, ip, username, password, tipo):
+    logging.info(f"Reiniciando processo {process_name}...")
+    new_process = Process(
+        target=run_event_recorder_process,
+        args=(ip, username, password, tipo, process_name)
+    )
+    new_process.start()
+    return new_process
 
 def run_flask():
-    """
-    Função para rodar o servidor Flask.
-    Esta função inicia o servidor Flask, que é responsável pela interface web da aplicação.
-    """
     logging.info("Iniciando servidor Flask...")
-    app.run(host='0.0.0.0', debug=False, port=80)
+    app.run(host='0.0.0.0', debug=False, port=80, use_reloader=False)
 
 def run_movimento_service():
-    """
-    Função para executar o MovimentoService em um processo separado.
-    Esta função inicia o serviço de detecção de movimento em um processo separado, para melhor isolamento e gerenciamento.
-    """
     try:
         logging.info("Iniciando MovimentoService...")
-        process = subprocess.Popen(["%LOCALAPPDATA%//Programs//Python//Python310//python.exe", "C:\\controle_acesso\\app\\services\\movimento\\MovimentoService.py"], shell=True)
-        return process
+        path_to_script = os.path.abspath("app\\services\\movimento\\MovimentoService.py")
+        path_to_python = sys.executable
+        with open(log_file, 'a') as log_file_handler: # Redireciona stdout e stderr para o arquivo de log
+            process = subprocess.Popen([path_to_python, path_to_script], stdout=log_file_handler, stderr=log_file_handler)
+            return process
     except FileNotFoundError:
         logging.error("Erro: MovimentoService.py não encontrado.")
         return None
@@ -67,89 +85,140 @@ def run_movimento_service():
         logging.exception(f"Erro ao iniciar MovimentoService: {e}")
         return None
 
-if __name__ == '__main__':
-    # Instancia o controlador
-    equipamento_controller = EquipamentoController()
-    biometria_in_pedestre = None
-    biometria_out_pedestre = None
-    movimento_process = None  # Variável para armazenar o processo do MovimentoService
+def run_monitor(process_monitor):
+    """
+    Executa o ProcessMonitor em uma thread separada,
+    restaurando temporariamente o print original para exibir a tabela.
+    """
+    try:
+        logging.info("Iniciando monitoramento de processos...")
+        # 4) Restaurar print original DENTRO do monitor()
+        import builtins
+        old_print = builtins.print
+        builtins.print = original_print  # permite prints só aqui
 
-    # Inicia o servidor Flask em um processo separado (opcional, mas recomendado para melhor isolamento)
+        # Agora, qualquer print dentro de process_monitor.monitor() aparecerá no terminal
+        process_monitor.monitor()
+
+    except Exception as e:
+        logging.exception(f"Erro no monitoramento de processos: {e}")
+    finally:
+        # 5) Volta ao no_print para silenciar prints fora do monitor()
+        builtins.print = old_print
+
+        logging.info("Monitoramento de processos encerrado.")
+
+# =================================================================
+# Main
+# =================================================================
+
+if __name__ == '__main__':
+    equipamento_controller = EquipamentoController()
+    movimento_process = None
+    flask_process = None
+
     flask_process = Process(target=run_flask)
     flask_process.start()
     logging.info(f"Processo Flask iniciado com PID: {flask_process.pid}")
 
-    # Dicionário para armazenar as threads e seus respectivos recorders
-    threads = {}
+    biometria_processes = {}
+    started_processes = set()
 
-    # Conjunto para rastrear os nomes das threads já iniciadas
-    started_threads = set()
-
-    # Captura o ip das biometrias            
     with app.app_context():
         ips_entrada, ips_saida = equipamento_controller.get_equipamento_id(unidade)
 
-    # Itera sobre os IPs de entrada e saída
+    process_monitor = ProcessMonitor()
+
     for ip_entrada in ips_entrada:
         for ip_saida in ips_saida:
-            # Cria instâncias de EventRecorder
-            recorder1 = EventRecorder(ip_entrada, username, password, 'IN')
-            recorder2 = EventRecorder(ip_saida, username, password, 'OUT')
+            process_in_name = f"Biometria_in_{ip_entrada}"
+            process_out_name = f"Biometria_out_{ip_saida}"
 
-            # Gera nomes únicos para as threads
-            thread_in_name = f"Biometria_in_{ip_entrada}"
-            thread_out_name = f"Biometria_out_{ip_saida}"
+            if process_in_name not in started_processes:
+                proc_in = Process(
+                    target=run_event_recorder_process,
+                    args=(ip_entrada, username, password, 'IN', process_in_name)
+                )
+                proc_in.start()
+                biometria_processes[process_in_name] = {
+                    "process": proc_in,
+                    "ip": ip_entrada,
+                    "tipo": "IN"
+                }
+                started_processes.add(process_in_name)
+                logging.info(f"Processo {process_in_name} iniciado com PID: {proc_in.pid}")
+                process_monitor.add_process(proc_in.pid, f"Biometria - {process_in_name}")
 
-            # Verifica se a thread já foi iniciada
-            if thread_in_name not in started_threads:
-                # Inicia as threads e adiciona-as ao conjunto
-                thread_in = Thread(target=run_event_recorder, args=(recorder1, thread_in_name), daemon=True)
-                threads[thread_in_name] = thread_in
-                thread_in.start()
-                started_threads.add(thread_in_name)
+            if process_out_name not in started_processes:
+                proc_out = Process(
+                    target=run_event_recorder_process,
+                    args=(ip_saida, username, password, 'OUT', process_out_name)
+                )
+                proc_out.start()
+                biometria_processes[process_out_name] = {
+                    "process": proc_out,
+                    "ip": ip_saida,
+                    "tipo": "OUT"
+                }
+                started_processes.add(process_out_name)
+                logging.info(f"Processo {process_out_name} iniciado com PID: {proc_out.pid}")
+                process_monitor.add_process(proc_out.pid, f"Biometria - {process_out_name}")
 
-            if thread_out_name not in started_threads:
-                thread_out = Thread(target=run_event_recorder, args=(recorder2, thread_out_name), daemon=True)
-                threads[thread_out_name] = thread_out
-                thread_out.start()
-                started_threads.add(thread_out_name)
-    
-        # Não precisa mais do restart_thread aqui
     movimento_process = run_movimento_service()
     if movimento_process:
         logging.info(f"MovimentoService iniciado com PID: {movimento_process.pid}")
-        # Adicione um pequeno delay para evitar sobrecarga
-        time.sleep(1)  # Espera 1 segundo antes de processar o próximo
+        time.sleep(1)
+
+    if flask_process:
+        process_monitor.add_process(flask_process.pid, "Flask")
+    if movimento_process:
+        process_monitor.add_process(movimento_process.pid, "MovimentoService")
+
+    monitor_thread = Thread(target=run_monitor, args=(process_monitor,), daemon=True)
+    monitor_thread.start()
+    logging.info("Thread de monitoramento iniciada.")
 
     while True:
         try:
-            # Verificação e reinicialização do processo de movimento
             if movimento_process and movimento_process.poll() is not None:
                 logging.warning("MovimentoService encerrado inesperadamente. Reiniciando...")
                 movimento_process = run_movimento_service()
                 if movimento_process:
                     logging.info(f"MovimentoService reiniciado com PID: {movimento_process.pid}")
 
-            # Verificação e reinicialização das threads
-            for thread_name, thread in threads.items():
-                if not thread.is_alive():
-                    logging.warning(f"Thread {thread_name} encerrada inesperadamente. Reiniciando...")
-                    if "in" in thread_name:
-                        ip = ip_entrada
-                        tipo = 'IN'
-                    else:
-                        ip = ip_saida
-                        tipo = 'OUT'
-                    recorder = EventRecorder(ip, username, password, tipo)
-                    threads[thread_name] = restart_thread(thread, recorder, thread_name)
+            if flask_process and flask_process.poll() is not None:
+                logging.warning("Processo Flask encerrado inesperadamente. Reiniciando...")
+                flask_process = Process(target=run_flask)
+                flask_process.start()
+                logging.info(f"Processo Flask reiniciado com PID: {flask_process.pid}")
 
-            time.sleep(5)  # Espera por 5 segundos antes de verificar novamente
+            for process_name, data in list(biometria_processes.items()):
+                proc = data["process"]
+                ip = data["ip"]
+                tipo = data["tipo"]
+                if not proc.is_alive():
+                    logging.warning(f"Processo {process_name} encerrado inesperadamente. Reiniciando...")
+                    new_proc = restart_process(process_name, ip, username, password, tipo)
+                    biometria_processes[process_name]["process"] = new_proc
+                    logging.info(f"Processo {process_name} reiniciado com PID: {new_proc.pid}")
+                    process_monitor.add_process(new_proc.pid, f"Biometria - {process_name}")
+
+            time.sleep(5)
 
         except KeyboardInterrupt:
             logging.info("Programa encerrado pelo usuário.")
             break
         except Exception as e:
             logging.exception(f"Erro no loop principal: {e}")
-            time.sleep(5)  # Espera por 5 segundos antes de tentar novamente
+            time.sleep(5)
 
     logging.info("Encerrando o programa...")
+    if movimento_process:
+        movimento_process.terminate()
+    if flask_process:
+        flask_process.terminate()
+    for data in biometria_processes.values():
+        data["process"].terminate()
+    monitor_thread.join()
+    for data in biometria_processes.values():
+        data["process"].join()

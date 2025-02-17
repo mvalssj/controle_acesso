@@ -368,36 +368,51 @@ class ProgramacaoController:
         @self.blueprint.route('/programacoes/cpf/varias', methods=['POST'])
         @csrf.exempt  # Usa a instância csrf para desabilitar CSRF nessa rota
         def buscar_varias_programacoes_por_cpf():
+
             # Obtém o CPF enviado via JSON
             data = request.get_json()
             cpf = data.get('cpf')
-
+            print('CPF: ',cpf)
             # Busca as programações no banco de dados que correspondem ao CPF
             programacoes = Programacao.query.filter_by(cpf=cpf).all()
+            print('Programacoes: ',programacoes)
+            # Obtém a data/hora atual
+            agora = datetime.now()
 
-            # Cria uma lista para armazenar as programações válidas
-            programacoes_validas = []
+            # Verifica se há programações no intervalo da data atual
+            programacoes_validas = [prog for prog in programacoes if prog.datahora_inicio <= agora <= prog.datahora_fim]
 
-            # Itera sobre as programações encontradas
-            for programacao in programacoes:
-                # Verifica se a programação está dentro do intervalo de tempo atual
-                agora = datetime.now()
-                if programacao.datahora_inicio <= agora <= programacao.datahora_fim:
-                    # Adiciona a programação à lista de programações válidas
-                    programacoes_validas.append({
-                        'id': programacao.id,
-                        'pessoa': programacao.pessoa,
-                        'cpf': programacao.cpf,
-                        'cavalo': programacao.cavalo,
-                        'carreta': programacao.carreta,
-                        'datahora_inicio': programacao.datahora_inicio.strftime('%Y-%m-%dT%H:%M'),
-                        'datahora_fim': programacao.datahora_fim.strftime('%Y-%m-%dT%H:%M'),
-                    })
-
-                    print('Programações validas: ',programacoes_validas)
-
-            # Retorna as programações válidas como JSON
-            return jsonify({'status': 'success', 'programacoes': programacoes_validas})
+            # Se encontrar programações dentro do intervalo, retorna a primeira encontrada
+            if programacoes_validas:
+                programacao = programacoes_validas  # Armazena todas as programações válidas
+                programacao_unica = programacao[0] if programacao else None  # Mantém a primeira programação, se existir
+                return jsonify({
+                    'status': 'success',
+                    'programacao': {
+                        'id': programacao_unica.id if programacao_unica else None,
+                        'pessoa': programacao_unica.pessoa if programacao_unica else None,
+                        'cpf': programacao_unica.cpf if programacao_unica else None,
+                        'cavalo': programacao_unica.cavalo if programacao_unica else None,
+                        'carreta': programacao_unica.carreta if programacao_unica else None,
+                        'datahora_inicio': programacao_unica.datahora_inicio.strftime('%Y-%m-%dT%H:%M') if programacao_unica else None,
+                        'datahora_fim': programacao_unica.datahora_fim.strftime('%Y-%m-%dT%H:%M') if programacao_unica else None,
+                    },
+                    'programacoes_validas': [
+                        {
+                            'id': prog.id,
+                            'pessoa': prog.pessoa,
+                            'cpf': prog.cpf,
+                            'cavalo': prog.cavalo,
+                            'carreta': prog.carreta,
+                            'datahora_inicio': prog.datahora_inicio.strftime('%Y-%m-%dT%H:%M'),
+                            'datahora_fim': prog.datahora_fim.strftime('%Y-%m-%dT%H:%M'),
+                        } for prog in programacao  # Itera sobre todas as programações válidas
+                    ]
+                })
+            
+            # Se não encontrar nenhuma programação válida, retorna uma mensagem de erro
+            else:
+                return jsonify({'status': 'error', 'message': 'Nenhuma programação ativa no intervalo de tempo atual.'}), 404
 
         # Rota para buscar informação no equipamento por CPF
         @self.blueprint.route('/buscar/equipamento', methods=['POST'])

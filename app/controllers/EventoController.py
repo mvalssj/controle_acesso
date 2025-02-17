@@ -1156,20 +1156,27 @@ class EventoController:
                         try:
                             # Faz uma requisição POST para obter a programação do CPF
                             response_programacao = requests.post(
-                                url_for('programacao.buscar_programacao_por_cpf', _external=True),
+                                url_for('programacao.buscar_varias_programacoes_por_cpf', _external=True),
                                 headers=headers,
                                 json={'cpf': cpf_primeiro_da_fila}
                             )
+
                             # Verifica se a requisição foi bem sucedida
                             response_programacao.raise_for_status()
                             # Converte a resposta para um dicionário JSON
                             response_data_programacao = response_programacao.json()
+                            # print('Programações existentes: ',response_data_programacao) #Removido para melhor legibilidade
 
                             # Verifica se a resposta contém uma lista de programações ou apenas uma
-                            if isinstance(response_data_programacao.get("programacao"), list):
-                                programacoes = response_data_programacao.get("programacao")
+                            programacoes = response_data_programacao.get("programacoes_validas")
+                            if programacoes is None:
+                                print("Nenhuma programação encontrada para este CPF.")
+                                programacoes = []  # Trata caso não haja programações
+                            elif isinstance(programacoes, list):
+                                print("Lista de programações encontradas:", programacoes)
                             else:
-                                programacoes = [response_data_programacao.get("programacao")]
+                                print("Programação não é uma lista. Convertendo para lista.")
+                                programacoes = [programacoes]  # Garante que programacoes seja sempre uma lista
 
                             # Itera sobre todas as programações encontradas para o CPF
                             for programacao in programacoes:
@@ -1242,6 +1249,8 @@ class EventoController:
                                     geral_status=status_geral
                                 )
 
+                                #print('Check:',novo_check.json()) #Removido para melhor legibilidade
+
                                 # Verifica se já existe um registro para este evento_id
                                 existing_check = ProgramacaoCheck.query.filter_by(evento_id=evento_id).first()
 
@@ -1280,6 +1289,8 @@ class EventoController:
                                     "status_pessoa": status_pessoa,
                                     "status_geral": status_geral
                                 })
+
+                                # print('resultados',resultados) #Removido para melhor legibilidade
 
                         except requests.exceptions.HTTPError as e:
                             print(f"Erro HTTP ao buscar programação: {e}")

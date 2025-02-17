@@ -13,7 +13,6 @@ from app.helpers.task_manager import ProcessMonitor
 from app.services.antipassback.EventoSevice import EventRecorder
 from config import unidade, username, password
 
-
 # 1) Guardar o print original
 original_print = builtins.print
 
@@ -22,7 +21,7 @@ def no_print(*args, **kwargs):
     pass
 
 # 3) Redirecionar o print global para no_print
-builtins.print = no_print
+# builtins.print = no_print
 
 # =================================================================
 # Configuração de LOG apenas em arquivo
@@ -64,6 +63,9 @@ def restart_process(process_name, ip, username, password, tipo):
         args=(ip, username, password, tipo, process_name)
     )
     new_process.start()
+    # Se reiniciar mostra o processo novamente
+    monitor_thread = Thread(target=run_monitor, args=(process_monitor,), daemon=True)
+    monitor_thread.start()
     return new_process
 
 def run_flask():
@@ -101,11 +103,14 @@ def run_monitor(process_monitor):
         process_monitor.monitor()
 
     except Exception as e:
-        logging.exception(f"Erro no monitoramento de processos: {e}")
+        logging.exception(f"Erro crítico no monitoramento de processos: {e}")
+        # Reinicia o monitoramento caso ocorra um erro crítico
+        time.sleep(5) # Espera um pouco antes de tentar novamente
+        run_monitor(process_monitor) # Chama a si mesma recursivamente para reiniciar
+
     finally:
         # 5) Volta ao no_print para silenciar prints fora do monitor()
         builtins.print = old_print
-
         logging.info("Monitoramento de processos encerrado.")
 
 # =================================================================
@@ -175,7 +180,7 @@ if __name__ == '__main__':
         process_monitor.add_process(movimento_process.pid, "MovimentoService")
 
     monitor_thread = Thread(target=run_monitor, args=(process_monitor,), daemon=True)
-    monitor_thread.start()
+    # monitor_thread.start()
     logging.info("Thread de monitoramento iniciada.")
 
     while True:
@@ -209,8 +214,10 @@ if __name__ == '__main__':
             logging.info("Programa encerrado pelo usuário.")
             break
         except Exception as e:
-            logging.exception(f"Erro no loop principal: {e}")
-            time.sleep(5)
+            logging.exception(f"Erro crítico no loop principal: {e}")
+            # Adiciona um tratamento de exceção mais robusto para o loop principal
+            time.sleep(60) # Espera 1 minuto antes de tentar novamente
+            # Não precisa reiniciar o loop principal, pois ele já faz isso automaticamente
 
     logging.info("Encerrando o programa...")
     if movimento_process:
